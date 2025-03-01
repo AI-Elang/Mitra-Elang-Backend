@@ -29,14 +29,14 @@ class DashboardService
 
         $achievementData = DB::table('achievement')->get();
 
-        // Ambil nilai score_kpi dan score_compliance dari achievement
-        $kpiScore = $achievementData->pluck('score_kpi')->first();
-        $complianceScore = $achievementData->pluck('score_compliance')->first();
+        // Ambil nilai score_kpi dan score_compliance dari achievement dengan casting ke float
+        $kpiScore = $this->castToFloat($achievementData->pluck('score_kpi')->first());
+        $complianceScore = $this->castToFloat($achievementData->pluck('score_compliance')->first());
 
-        // Buat mapping subparameter ke achievement data
+        // Buat mapping subparameter ke achievement data dengan casting ke float jika perlu
         $subparameter = $subparameter->map(function ($sub) use ($achievementData) {
             if ($sub->tabel === 'achievement') {
-                $sub->value = $achievementData->pluck($sub->kolom)->first();
+                $sub->value = $this->castToFloat($achievementData->pluck($sub->kolom)->first());
             }
             return $sub;
         });
@@ -64,5 +64,16 @@ class DashboardService
             ->where('is_active', True)
             ->get();
         return $profile;
+    }
+
+    /**
+     * Method untuk meng-cast nilai menjadi float jika memang angka float, selain itu dikembalikan seperti apa adanya.
+     */
+    private function castToFloat($value)
+    {
+        if (is_numeric($value) && strpos($value, '.') !== false) {
+            return (float) $value;
+        }
+        return is_numeric($value) ? (int) $value : $value;
     }
 }
