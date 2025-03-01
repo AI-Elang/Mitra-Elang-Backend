@@ -13,7 +13,7 @@ class AuthService
     public function login($request)
     {
         if (!$request->username || !$request->password) {
-            throw new Exception('Username and password are required', 400);
+            throw new Exception('username dan password harus diisi', 400);
         }
 
         // Attempt login terlebih dahulu sebelum mengatur TTL
@@ -21,7 +21,7 @@ class AuthService
             $user = auth('api')->user();
 
             if ($user->role_label == 'DSE') {
-                throw new Exception('Unauthorized', 401);
+                throw new Exception('anda tidak memiliki akses', 401);
             }
 
             // Hitung waktu hingga pukul 00:00 besok
@@ -44,7 +44,7 @@ class AuthService
 
             // Periksa apakah akun aktif
             if (!$user->is_active) {
-                throw new Exception('Account is deactivated', 403);
+                throw new Exception('akun tidak aktif', 403);
             }
 
             // Gunakan token yang sudah dibuat ulang
@@ -52,7 +52,7 @@ class AuthService
 
             return $user;
         } else {
-            throw new Exception('Wrong email or password', 400);
+            throw new Exception('username atau password salah', 400);
         }
     }
 
