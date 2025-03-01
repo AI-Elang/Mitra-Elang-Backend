@@ -16,9 +16,9 @@ class DashboardService
             ->get();
 
         $parameter = DB::table('parameter_mitra')
-            ->select('id', 'name')
+            ->select('id', 'name', 'is_active')
             ->whereIn('parameter_mitra.id', $parameterRegion->pluck('parameter_id'))
-            ->where('parameter_mitra.is_active', True)
+//            ->where('parameter_mitra.is_active', True)
             ->get();
 
         $subparameter = DB::table('subparameter_mitra')
