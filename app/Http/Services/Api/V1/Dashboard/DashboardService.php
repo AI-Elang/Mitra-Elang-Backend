@@ -6,13 +6,50 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardService
 {
+    private function castToFloat($value)
+    {
+        if (is_numeric($value) && strpos($value, '.') !== false) {
+            return (float)$value;
+        }
+        return is_numeric($value) ? (int)$value : $value;
+    }
+
+    /**
+     * Method untuk meng-cast nilai menjadi float jika memang angka float, selain itu dikembalikan seperti apa adanya.
+     */
+
+    public function getRegionId($mcId)
+    {
+        $branchId = DB::table('territory_dashboards')
+            ->select('id', 'id_secondary')
+            ->where('id', $mcId)
+            ->first();
+
+        $areaId = DB::table('territory_dashboards')
+            ->select('id_secondary')
+            ->where('id', $branchId->id_secondary)
+            ->first();
+
+        $regionId = DB::table('territory_dashboards')
+            ->select('id_secondary')
+            ->where('id', $areaId->id_secondary)
+            ->first();
+        return $regionId->id_secondary;
+    }
+
+    /**
+     * Method untuk mengambil id region dari id mc yang diberikan.
+     */
+
     public function dashboard()
     {
-        $userTerritory = auth('api')->user()->territory_id;
+        $mcId = auth('api')->user()->territory_id;
+        $regionId = $this->getRegionId($mcId);
+
         $parameterRegion = DB::table('region_parameter')
             ->select('parameter_id')
             ->where('is_active', True)
-            ->where('territory_id', $userTerritory)
+            ->where('territory_id', $regionId)
             ->get();
 
         $parameter = DB::table('parameter_mitra')
@@ -59,21 +96,18 @@ class DashboardService
 
     public function account()
     {
+        $mcId = auth('api')->user()->territory_id;
+        $mc_name = DB::table('territory_dashboards')
+            ->select('name')
+            ->where('id', $mcId)
+            ->first();
+
         $profile = DB::table('mitra_table')
-            ->select('id_mitra','nama_mitra','nama_owner')
+            ->select('id_mitra', 'nama_mitra', 'nama_owner')
             ->where('is_active', True)
+            ->where('mc', $mc_name->name)
             ->get();
         return $profile;
     }
-
-    /**
-     * Method untuk meng-cast nilai menjadi float jika memang angka float, selain itu dikembalikan seperti apa adanya.
-     */
-    private function castToFloat($value)
-    {
-        if (is_numeric($value) && strpos($value, '.') !== false) {
-            return (float) $value;
-        }
-        return is_numeric($value) ? (int) $value : $value;
-    }
 }
+
