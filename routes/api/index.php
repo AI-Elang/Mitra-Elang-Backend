@@ -13,7 +13,7 @@ Route::prefix('v1')->group(function () {
     Route::controller(DashboardController::class)->group(function () {
         Route::prefix('dashboard')->group(function () {
             Route::get('parameter', 'dashboard');
-            Route::get('profile','profile');
+            Route::get('account','account');
         });
     });
 });

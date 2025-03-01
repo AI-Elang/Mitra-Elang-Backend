@@ -57,7 +57,7 @@ class DashboardService
         return $parameter;
     }
 
-    public function profile()
+    public function account()
     {
         $profile = DB::table('mitra_table')
             ->select('id_mitra','nama_mitra','nama_owner')

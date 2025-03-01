@@ -31,10 +31,10 @@ class DashboardController extends Controller
         }
     }
 
-    public function profile()
+    public function account()
     {
         try {
-            $data = $this->service->profile();
+            $data = $this->service->account();
             return $this->respond([
                 'data' => $data,
                 'meta' => [
