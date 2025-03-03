@@ -73,7 +73,7 @@ class DashboardService
                     'id' => $param->parameter_id,
                     'name' => $param->parameter_name,
                     'is_active' => $param->parameter_is_active,
-                    $param->parameter_column => isset($parameterValue->{$param->parameter_column}) ? number_format((float) $parameterValue->{$param->parameter_column}, 1) : "0.0",
+                    $param->parameter_column => isset($parameterValue->{$param->parameter_column}) ? (float)number_format((float) $parameterValue->{$param->parameter_column}, 1) : "0.0",
                     'subparameters' => []
                 ];
             }
