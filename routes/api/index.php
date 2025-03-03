@@ -10,10 +10,15 @@ Route::prefix('v1')->group(function () {
         Route::post('logout', 'logout')->middleware('jwt.auth');
     });
 
-    Route::controller(DashboardController::class)->group(function () {
-        Route::prefix('dashboard')->group(function () {
-            Route::get('parameter', 'dashboard');
-            Route::get('account','account');
+    Route::middleware('jwt.auth')->group(function () {
+        Route::controller(DashboardController::class)->group(function () {
+            Route::prefix('dashboard')->group(function () {
+                Route::get('parameter', 'dashboard');
+                Route::get('account', 'account');
+            });
         });
+
+
+
     });
 });

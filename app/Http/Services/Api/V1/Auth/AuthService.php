@@ -20,7 +20,7 @@ class AuthService
         if ($token = auth('api')->attempt(['username' => $request->username, 'password' => $request->password])) {
             $user = auth('api')->user();
 
-            if ($user->role != 6) {
+            if ($user->role != 6 && $user->role != 7) {
                 throw new Exception('Anda tidak memiliki akses', 401);
             }
 

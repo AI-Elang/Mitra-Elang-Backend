@@ -6,17 +6,6 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardService
 {
-    private function castToFloat($value)
-    {
-        if (is_numeric($value) && strpos($value, '.') !== false) {
-            return (float)$value;
-        }
-        return is_numeric($value) ? (int)$value : $value;
-    }
-
-    /**
-     * Method untuk meng-cast nilai menjadi float jika memang angka float, selain itu dikembalikan seperti apa adanya.
-     */
 
     public function getRegionId($mcId)
     {
@@ -44,58 +33,73 @@ class DashboardService
     public function dashboard()
     {
         $mcId = auth('api')->user()->territory_id;
+        $useRole = auth('api')->user()->role_label;
         $regionId = $this->getRegionId($mcId);
 
         $parameterRegion = DB::table('region_parameter')
-            ->select('parameter_id')
-            ->where('is_active', True)
+            ->where('is_active', true)
             ->where('territory_id', $regionId)
+            ->where('type', $useRole)
+            ->pluck('parameter_id')
+            ->toArray();
+
+        $parameters = DB::table('parameter_mitra as p')
+            ->join('subparameter_mitra as sp', 'p.id', '=', 'sp.parameter_id')
+            ->select(
+                'p.id as parameter_id',
+                'p.name as parameter_name',
+                'p.kolom as parameter_column',
+                'sp.id as subparameter_id',
+                'sp.name as subparameter_name',
+                'sp.kolom as subparameter_column',
+                'p.tabel as parameter_table',
+                'sp.tabel as subparameter_table',
+                'p.is_active as parameter_is_active',
+            )
+            ->whereIn('p.id', $parameterRegion)
             ->get();
 
-        $parameter = DB::table('parameter_mitra')
-            ->select('id', 'name', 'is_active')
-            ->whereIn('parameter_mitra.id', $parameterRegion->pluck('parameter_id'))
-            ->where('parameter_mitra.is_active', True)
-            ->get();
+        $data = [];
 
-        $subparameter = DB::table('subparameter_mitra')
-            ->select('id', 'name', 'parameter_id', 'tabel', 'kolom')
-            ->whereIn('parameter_id', $parameter->pluck('id'))
-            ->where('subparameter_mitra.is_active', true)
-            ->get();
+        foreach ($parameters as $param) {
+            // Cek apakah parameter sudah ada dalam array data
+            if (!isset($data[$param->parameter_id])) {
+                // Ambil nilai parameter
+                $parameterValue = DB::table($param->parameter_table)
+                    ->select($param->parameter_column)
+                    ->first();
 
-        $achievementData = DB::table('achievement')->get();
-
-        // Ambil nilai score_kpi dan score_compliance dari achievement dengan casting ke float
-        $kpiScore = $this->castToFloat($achievementData->pluck('score_kpi')->first());
-        $complianceScore = $this->castToFloat($achievementData->pluck('score_compliance')->first());
-
-        // Buat mapping subparameter ke achievement data dengan casting ke float jika perlu
-        $subparameter = $subparameter->map(function ($sub) use ($achievementData) {
-            if ($sub->tabel === 'achievement') {
-                $sub->value = $this->castToFloat($achievementData->pluck($sub->kolom)->first());
-            }
-            return $sub;
-        });
-
-        $parameter = $parameter->map(function ($param) use ($subparameter, $kpiScore, $complianceScore) {
-            if ($param->name === 'KPI') {
-                $param->score_kpi = $kpiScore;
-            }
-            if ($param->name === 'COMPLIANCE') {
-                $param->score_compliance = $complianceScore;
+                $data[$param->parameter_id] = [
+                    'id' => $param->parameter_id,
+                    'name' => $param->parameter_name,
+                    'is_active' => $param->parameter_is_active,
+                    $param->parameter_column => isset($parameterValue->{$param->parameter_column}) ? number_format((float) $parameterValue->{$param->parameter_column}, 1) : "0.0",
+                    'subparameters' => []
+                ];
             }
 
-            $param->subparameters = $subparameter->where('parameter_id', $param->id)->values();
+            // Ambil nilai subparameter
+            $subparameterValue = DB::table($param->subparameter_table)
+                ->select($param->subparameter_column)
+                ->first();
 
-            return $param;
-        });
+            $data[$param->parameter_id]['subparameters'][] = [
+                'id' => $param->subparameter_id,
+                'name' => $param->subparameter_name,
+                'parameter_id' => $param->parameter_id,
+                'tabel' => $param->subparameter_table,
+                'kolom' => $param->subparameter_column,
+                'value' => isset($subparameterValue->{$param->subparameter_column}) ? $subparameterValue->{$param->subparameter_column} : null
+            ];
+        }
 
-        return $parameter;
+        return array_values($data);
     }
+
 
     public function account()
     {
+        $username = auth('api')->user()->username;
         $mcId = auth('api')->user()->territory_id;
         $mc_name = DB::table('territory_dashboards')
             ->select('name')
@@ -105,7 +109,7 @@ class DashboardService
         $profile = DB::table('mitra_table')
             ->select('id_mitra', 'nama_mitra', 'nama_owner')
             ->where('is_active', True)
-            ->where('mc', $mc_name->name)
+            ->where('id_mitra', $username)
             ->get();
         return $profile;
     }
