@@ -15,6 +15,8 @@ class DashboardService
             ->where('t1.id', $mcId)
             ->value('t3.id_secondary');
     }
+
+
     /**
      * Method untuk mengambil id region dari id mc yang diberikan.
      */
