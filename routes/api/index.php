@@ -15,9 +15,11 @@ Route::prefix('v1')->group(function () {
             Route::prefix('dashboard')->group(function () {
                 Route::get('parameter', 'dashboard');
                 Route::get('account', 'account');
+                Route::get('insentif', 'insentif');
+                Route::get('profile', 'profile');
+                Route::get('sliders', 'sliders');
             });
         });
-
 
 
     });

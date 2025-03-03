@@ -2,6 +2,7 @@
 
 namespace App\Http\Services\Api\V1\Dashboard;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class DashboardService
@@ -25,6 +26,7 @@ class DashboardService
     {
         $mcId = auth('api')->user()->territory_id;
         $useRole = auth('api')->user()->role_label;
+        $username = auth('api')->user()->username;
         $regionId = $this->getRegionId($mcId);
 
         $parameters = DB::table('parameter_mitra as p')
@@ -48,41 +50,45 @@ class DashboardService
             ->where('rp.type', $useRole)
             ->get();
 
-
         $data = [];
 
         foreach ($parameters as $param) {
-            // Cek apakah parameter sudah ada dalam array data
-            if (!isset($data[$param->parameter_id])) {
-                // Ambil nilai parameter
-                $parameterValue = DB::table($param->parameter_table)
-                    ->select($param->parameter_column)
-                    ->first();
+            // Fetch parameter value safely
+            $parameterValue = DB::table($param->parameter_table)
+                ->select($param->parameter_column, 'last_update')
+                ->where('id_mitra', $username)
+                ->first();
 
-                $data[$param->parameter_id] = [
-                    'id' => $param->parameter_id,
-                    'name' => $param->parameter_name,
-                    'is_active' => $param->parameter_is_active,
-                    'value' => isset($parameterValue->{$param->parameter_column})
-                        ? (is_numeric($parameterValue->{$param->parameter_column})
-                            ? (is_float($floatValue = (float) $parameterValue->{$param->parameter_column})
-                                ? round($floatValue, 1)
-                                : $parameterValue->{$param->parameter_column})
+            $data[$param->parameter_id] = [
+                'id' => $param->parameter_id,
+                'name' => $param->parameter_name,
+                'is_active' => $param->parameter_is_active,
+                'last_update' => isset($parameterValue->last_update)
+                    ? Carbon::parse($parameterValue->last_update)->format('d-m-Y')
+                    : null, // Format date if exists
+                'value' => isset($parameterValue->{$param->parameter_column})
+                    ? (is_numeric($parameterValue->{$param->parameter_column})
+                        ? (is_float($floatValue = (float) $parameterValue->{$param->parameter_column})
+                            ? round($floatValue, 1)
                             : $parameterValue->{$param->parameter_column})
-                        : 0.0,
-                    'subparameters' => []
-                ];
-            }
+                        : $parameterValue->{$param->parameter_column})
+                    : 0.0,
+                'subparameters' => []
+            ];
 
-            // Ambil nilai subparameter
+            // Fetch subparameter value safely
             $subparameterValue = DB::table($param->subparameter_table)
-                ->select($param->subparameter_column)
+                ->select($param->subparameter_column, 'last_update')
+                ->where('id_mitra', $username)
                 ->first();
 
             $data[$param->parameter_id]['subparameters'][] = [
                 'id' => $param->subparameter_id,
                 'name' => $param->subparameter_name,
                 'parameter_id' => $param->parameter_id,
+                'last_update' => isset($subparameterValue->last_update)
+                    ? Carbon::parse($subparameterValue->last_update)->format('d-m-Y')
+                    : null, // Format date if exists
                 'value' => isset($subparameterValue->{$param->subparameter_column})
                     ? (is_numeric($subparameterValue->{$param->subparameter_column})
                         ? (is_float($floatValue = (float) $subparameterValue->{$param->subparameter_column})
@@ -92,14 +98,116 @@ class DashboardService
                     : 0.0,
             ];
         }
+
         return array_values($data);
     }
+
+
+    public function insentif()
+    {
+        $username = auth('api')->user()->username;
+        $mcid = auth('api')->user()->territory_id;
+        $mc_name = DB::table('territory_dashboards')
+            ->select('name')
+            ->where('id', $mcid)
+            ->first();
+        $insentif = DB::table('total_achievement')
+            ->select('item', 'nilai', 'status', 'tipe', 'last_update')
+            ->where('id_mitra', $username)
+            ->where('MC', $mc_name->name)
+            ->get()
+            ->map(function ($item) {
+                // Convert 'nilai' based on 'status'
+                if (is_numeric($item->nilai)) {
+                    if (ctype_digit($item->nilai)) {
+                        $item->nilai = (int) $item->nilai; // Convert to integer
+                    } else {
+                        $item->nilai = (float) $item->nilai; // Convert to float
+                    }
+                }
+                if (!empty($item->last_update)) {
+                    $item->last_update = Carbon::parse($item->last_update)->format('d-m-Y');
+                }
+
+                return $item;
+            });
+
+        return $insentif;
+    }
+
+    public function profile()
+    {
+        $username = auth('api')->user()->username;
+        $mcid = auth('api')->user()->territory_id;
+        $mc_name = DB::table('territory_dashboards')
+            ->select('name')
+            ->where('id', $mcid)
+            ->first();
+        $profile = DB::table('elang_mitra_sampah')
+            ->where('id_mitra', $username)
+            ->where('MC', $mc_name->name)
+            ->orderBy('URUTAN') // Order by 'urutan' in ascending order
+            ->get()
+            ->map(function ($item) {
+                foreach ($item as $key => $value) {
+                    if (is_numeric($value)) {
+                        // Check if value is an integer (no decimal point)
+                        if (ctype_digit(strval($value))) {
+                            $item->$key = (int) $value; // Convert to integer
+                        } else {
+                            $item->$key = (float) $value; // Convert to float
+                        }
+                    }
+                }
+
+                // Format 'last_update' to DD-MM-YYYY if it exists
+                if (!empty($item->mtd_date)) {
+                    $item->mtd_date = Carbon::parse($item->mtd_date)->format('d-m-Y');
+                }
+
+                return $item; // Return modified item after processing all fields
+            });
+
+        return $profile;
+    }
+
+    public function sliders($request)
+    {
+        $params = $request->status;
+
+        return DB::table('sliders')
+            ->select([
+                'id',
+                'name',
+                'image',
+                'link_to',
+                'is_active',
+                'order',
+                'status',
+            ])
+            ->when(!$params, function ($query) use ($request) {
+                return $query->where('is_active', true);
+            })
+            ->when($params == 'active', function ($query) use ($request) {
+                return $query->where('is_active', true);
+            })
+            ->when($params == 'inactive', function ($query) use ($request) {
+                return $query->where('is_active', false);
+            })
+            ->when($params == 'all', function ($query) use ($request) {
+                return $query;
+            })
+            ->whereIn('for_elang', ['all'])
+            ->orderBy('order')
+            ->get();
+    }
+
+
 
 
     public function account()
     {
         $username = auth('api')->user()->username;
-
         $profile = DB::table('mitra_table')
             ->select('id_mitra', 'nama_mitra', 'nama_owner', 'type')
             ->where('is_active', True)

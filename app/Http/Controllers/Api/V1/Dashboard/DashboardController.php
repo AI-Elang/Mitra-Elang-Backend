@@ -31,6 +31,58 @@ class DashboardController extends Controller
         }
     }
 
+    public function insentif()
+    {
+        try{
+            $data = $this->service->insentif();
+            return $this->respond([
+                'data' => $data,
+                'meta' => [
+                    'status_code' => 200,
+                    'success' => true,
+                    'message' => 'Success Get Insentif',
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return $this->ApiExceptionError($e->getMessage());
+        }
+    }
+
+    public function profile()
+    {
+        try{
+            $data = $this->service->profile();
+            return $this->respond([
+                'data' => $data,
+                'meta' => [
+                    'status_code' => 200,
+                    'success' => true,
+                    'message' => 'Success Get Profile',
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return $this->ApiExceptionError($e->getMessage());
+        }
+    }
+
+    public function sliders(Request $request)
+    {
+        try{
+            $data = $this->service->sliders($request);
+            return $this->respond([
+                'data' => $data,
+                'meta' => [
+                    'status_code' => 200,
+                    'success' => true,
+                    'message' => 'Success Get Sliders',
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return $this->ApiExceptionError($e->getMessage());
+        }
+    }
+
+
     public function account()
     {
         try {
