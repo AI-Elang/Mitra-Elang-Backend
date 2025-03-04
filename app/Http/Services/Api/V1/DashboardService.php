@@ -117,7 +117,7 @@ class DashboardService
             ->where('id', $mcid)
             ->first();
         $insentif = DB::table('total_achievement')
-            ->select('item', 'nilai', 'status', 'tipe', 'last_update')
+            ->select('item', 'nilai', 'tipe', 'last_update')
             ->where('id_mitra', $username)
             ->where('MC', $mc_name->name)
             ->get()
