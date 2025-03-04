@@ -59,48 +59,53 @@ class DashboardService
                 ->where('id_mitra', $username)
                 ->first();
 
-            $data[$param->parameter_id] = [
-                'id' => $param->parameter_id,
-                'name' => $param->parameter_name,
-                'is_active' => $param->parameter_is_active,
-                'last_update' => isset($parameterValue->last_update)
-                    ? Carbon::parse($parameterValue->last_update)->format('d-m-Y')
-                    : null, // Format date if exists
-                'value' => isset($parameterValue->{$param->parameter_column})
-                    ? (is_numeric($parameterValue->{$param->parameter_column})
-                        ? (is_float($floatValue = (float) $parameterValue->{$param->parameter_column})
-                            ? round($floatValue, 1)
+            if (!isset($data[$param->parameter_id])) {
+                $data[$param->parameter_id] = [
+                    'id' => $param->parameter_id,
+                    'name' => $param->parameter_name,
+                    'is_active' => $param->parameter_is_active,
+                    'last_update' => isset($parameterValue->last_update)
+                        ? Carbon::parse($parameterValue->last_update)->format('d-m-Y')
+                        : null, // Format date if exists
+                    'value' => isset($parameterValue->{$param->parameter_column})
+                        ? (is_numeric($parameterValue->{$param->parameter_column})
+                            ? (is_float($floatValue = (float) $parameterValue->{$param->parameter_column})
+                                ? round($floatValue, 1)
+                                : $parameterValue->{$param->parameter_column})
                             : $parameterValue->{$param->parameter_column})
-                        : $parameterValue->{$param->parameter_column})
-                    : 0.0,
-                'subparameters' => []
-            ];
+                        : 0.0,
+                    'subparameters' => []
+                ];
+            }
 
-            // Fetch subparameter value safely
-            $subparameterValue = DB::table($param->subparameter_table)
+            // Fetch all subparameter values safely
+            $subparameterValues = DB::table($param->subparameter_table)
                 ->select($param->subparameter_column, 'last_update')
                 ->where('id_mitra', $username)
-                ->first();
+                ->get();
 
-            $data[$param->parameter_id]['subparameters'][] = [
-                'id' => $param->subparameter_id,
-                'name' => $param->subparameter_name,
-                'parameter_id' => $param->parameter_id,
-                'last_update' => isset($subparameterValue->last_update)
-                    ? Carbon::parse($subparameterValue->last_update)->format('d-m-Y')
-                    : null, // Format date if exists
-                'value' => isset($subparameterValue->{$param->subparameter_column})
-                    ? (is_numeric($subparameterValue->{$param->subparameter_column})
-                        ? (is_float($floatValue = (float) $subparameterValue->{$param->subparameter_column})
-                            ? round($floatValue, 1)
-                            : $subparameterValue->{$param->subparameter_column})
-                        : $subparameterValue->{$param->subparameter_column})
-                    : 0.0,
-            ];
+            foreach ($subparameterValues as $subparamValue) {
+                $data[$param->parameter_id]['subparameters'][] = [
+                    'id' => $param->subparameter_id,
+                    'name' => $param->subparameter_name,
+                    'parameter_id' => $param->parameter_id,
+                    'last_update' => isset($subparamValue->last_update)
+                        ? Carbon::parse($subparamValue->last_update)->format('d-m-Y')
+                        : null, // Format date if exists
+                    'value' => isset($subparamValue->{$param->subparameter_column})
+                        ? (is_numeric($subparamValue->{$param->subparameter_column})
+                            ? (is_float($floatValue = (float) $subparamValue->{$param->subparameter_column})
+                                ? round($floatValue, 1)
+                                : $subparamValue->{$param->subparameter_column})
+                            : $subparamValue->{$param->subparameter_column})
+                        : 0.0,
+                ];
+            }
         }
 
         return array_values($data);
     }
+
 
 
     public function insentif()

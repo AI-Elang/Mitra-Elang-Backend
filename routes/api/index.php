@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\DashboardController;
+use App\Http\Controllers\Api\V1\OutletController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -18,6 +19,21 @@ Route::prefix('v1')->group(function () {
                 Route::get('insentif', 'insentif');
                 Route::get('profile', 'profile');
                 Route::get('sliders', 'sliders');
+            });
+        });
+
+        Route::controller(OutletController::class)->group(function () {
+            Route::prefix('outlet')->group(function () {
+                Route::get('dropdown-pt', 'dropdown');
+                Route::get('locations', 'listOutletLocation');
+                Route::get('{pt}', 'listOutletByPartnerName');
+                Route::prefix('detail')->group(function () {
+                    Route::get('{qr_code}', 'outletDetail');
+                    Route::get('{qr_code}/ga', 'outletDetailGa');
+                    Route::get('{qr_code}/sec', 'outletDetailSec');
+                    Route::get('{qr_code}/supply', 'outletDetailSupply');
+                    Route::get('{qr_code}/demand', 'outletDetailDemand');
+                });
             });
         });
 
