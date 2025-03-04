@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Services\Api\V1\Dashboard;
+namespace App\Http\Services\Api\V1;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -164,6 +164,9 @@ class DashboardService
                 if (!empty($item->mtd_date)) {
                     $item->mtd_date = Carbon::parse($item->mtd_date)->format('d-m-Y');
                 }
+                if (!empty($item->last_update)) {
+                    $item->last_update = Carbon::parse($item->last_update)->format('d-m-Y');
+                }
 
                 return $item; // Return modified item after processing all fields
             });
@@ -201,8 +204,6 @@ class DashboardService
             ->orderBy('order')
             ->get();
     }
-
-
 
 
     public function account()

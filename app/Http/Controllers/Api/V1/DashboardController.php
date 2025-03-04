@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\Api\V1\Dashboard;
+namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\BaseApiController as Controller;
-use App\Http\Services\Api\V1\Dashboard\DashboardService;
+use App\Http\Services\Api\V1\DashboardService;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller

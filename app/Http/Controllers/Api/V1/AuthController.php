@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\Api\V1\Auth;
+namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\BaseApiController as Controller;
-use App\Http\Services\Api\V1\Auth\AuthService;
+use App\Http\Services\Api\V1\AuthService;
 use Illuminate\Http\Request;
 
 class AuthController extends Controller
