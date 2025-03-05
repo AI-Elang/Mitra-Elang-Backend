@@ -14,10 +14,10 @@ class SiteController extends Controller
         $this->service = $service;
     }
 
-    public function listKecamatanByMc($mc_id, Request $request)
+    public function listKecamatanByMc()
     {
         try {
-            $data = $this->service->listKecamatanByMc($mc_id, $request);
+            $data = $this->service->listKecamatanByMc();
             $result = [
                 'data' => $data->transform(function ($data) {
                     return [
@@ -58,10 +58,10 @@ class SiteController extends Controller
         }
     }
 
-    public function siteDetail($site_id, Request $request)
+    public function siteDetail($site_id)
     {
         try {
-            $data = $this->service->siteDetail($site_id, $request);
+            $data = $this->service->siteDetail($site_id);
             $result = [
                 'data' => $data,
                 'meta' => [
@@ -77,10 +77,10 @@ class SiteController extends Controller
         }
     }
 
-    public function siteDetailRevenue($site_id, Request $request)
+    public function siteDetailRevenue($site_id)
     {
         try {
-            $data = $this->service->siteDetailRevenue($site_id, $request);
+            $data = $this->service->siteDetailRevenue($site_id);
             $result = [
                 'data' => $data,
                 'meta' => [
@@ -115,10 +115,10 @@ class SiteController extends Controller
         }
     }
 
-    public function siteDetailGa($site_id, Request $request)
+    public function siteDetailGa($site_id)
     {
         try {
-            $data = $this->service->siteDetailGa($site_id, $request);
+            $data = $this->service->siteDetailGa($site_id);
             $result = [
                 'data' => $data,
                 'meta' => [
@@ -134,10 +134,10 @@ class SiteController extends Controller
         }
     }
 
-    public function siteDetailVlr($site_id, Request $request)
+    public function siteDetailVlr($site_id)
     {
         try {
-            $data = $this->service->siteDetailVlr($site_id, $request);
+            $data = $this->service->siteDetailVlr($site_id);
             $result = [
                 'data' => $data,
                 'meta' => [
@@ -153,10 +153,10 @@ class SiteController extends Controller
         }
     }
 
-    public function siteDetailOutlet($site_id, Request $request)
+    public function siteDetailOutlet($site_id)
     {
         try {
-            $data = $this->service->siteDetailOutlet($site_id, $request);
+            $data = $this->service->siteDetailOutlet($site_id);
             $result = [
                 'data' => $data,
                 'meta' => [

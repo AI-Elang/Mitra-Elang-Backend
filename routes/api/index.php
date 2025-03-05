@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\DashboardController;
+use App\Http\Controllers\Api\V1\DseAiController;
 use App\Http\Controllers\Api\V1\OutletController;
 use App\Http\Controllers\Api\V1\SiteController;
 use Illuminate\Support\Facades\Route;
@@ -41,7 +42,7 @@ Route::prefix('v1')->group(function () {
 
             Route::controller(SiteController::class)->group(function () {
                 Route::prefix('sites')->group(function () {
-                    Route::get('pt/{mc_id}', 'listKecamatanByMc');
+                    Route::get('pt', 'listKecamatanByMc');
                     Route::get('/', 'listSiteByKecamatan');
                     Route::get('/dashboard', 'getSiteDashboard');
                     Route::get('{site_id}/detail', 'siteDetail');
@@ -50,6 +51,18 @@ Route::prefix('v1')->group(function () {
                     Route::get('{site_id}/detail/ga', 'siteDetailGa');
                     Route::get('{site_id}/detail/vlr', 'siteDetailVlr');
                     Route::get('{site_id}/detail/outlet', 'siteDetailOutlet');
+                });
+            });
+
+            Route::controller(DseAiController::class)->group(function () {
+                Route::prefix('dse-ai')->group(function () {
+                    Route::get('dashboard/data', 'getDseAiDashboard');
+                    Route::get('{mc_id}', 'listMcById');
+                    Route::get('outlet/{dse_id}', 'listOutletByDseDate');
+                    Route::get('outlet/{outlet_id}/images', 'getOutletImages');
+                    Route::get('{mc_id}/comparisons', 'getDseAiComparisons');
+                    Route::get('{mc_id}/summary', 'getDseAiSummary');
+                    Route::get('{mc_id}/daily', 'getDseAiDaily');
                 });
             });
         });

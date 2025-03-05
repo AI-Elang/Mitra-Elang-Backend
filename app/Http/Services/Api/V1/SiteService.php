@@ -7,9 +7,10 @@ use Illuminate\Support\Str;
 
 class SiteService
 {
-    public function listKecamatanByMc($mc_id, $request)
+    public function listKecamatanByMc()
     {
-        $brand = Str::upper($request->brand);
+        $mc_id = auth('api')->user()->territory_id;
+        $brand = auth('api')->user()->brand;
 
         if (!$brand) {
             throw new \Exception('Brand is required', 400);
@@ -64,10 +65,10 @@ class SiteService
         return $data;
     }
 
-    public function listSiteByKecamatan($request)
+    public function listSiteByKecamatan(Request $request)
     {
         $mcId = auth('api')->user()->territory_id;
-        $brand = Str::upper($request->brand);
+        $brand = auth('api')->user()->brand;
         $kecamatan = Str::upper($request->kecamatan);
 
         if (!$kecamatan) {
@@ -112,9 +113,9 @@ class SiteService
         return $data;
     }
 
-    public function siteDetail($site_id, $request)
+    public function siteDetail($site_id)
     {
-        $brand = Str::upper($request->brand);
+        $brand = auth('api')->user()->brand;
 
         if (!$brand) {
             throw new \Exception('Brand is required', 400);
@@ -155,9 +156,9 @@ class SiteService
         return $before->merge(['brand' => $brand])->merge($after);
     }
 
-    public function siteDetailRevenue($site_id, $request)
+    public function siteDetailRevenue($site_id)
     {
-        $brand = Str::upper($request->brand);
+        $brand = auth('api')->user()->brand;
 
         if (!$brand) {
             throw new \Exception('Brand is required', 400);
@@ -196,9 +197,9 @@ class SiteService
         });
     }
 
-    public function siteDetailRgu($site_id, $request)
+    public function siteDetailRgu($site_id)
     {
-        $brand = Str::upper($request->brand);
+        $brand = auth('api')->user()->brand;
 
         if (!$brand) {
             throw new \Exception('Brand is required', 400);
@@ -237,9 +238,9 @@ class SiteService
         });
     }
 
-    public function siteDetailGa($site_id, $request)
+    public function siteDetailGa($site_id)
     {
-        $brand = Str::upper($request->brand);
+        $brand = auth('api')->user()->brand;
 
         if (!$brand) {
             throw new \Exception('Brand is required', 400);
@@ -278,9 +279,9 @@ class SiteService
         });
     }
 
-    public function siteDetailVlr($site_id, $request)
+    public function siteDetailVlr($site_id)
     {
-        $brand = Str::upper($request->brand);
+        $brand = auth('api')->user()->brand;
 
         if (!$brand) {
             throw new \Exception('Brand is required', 400);
@@ -319,9 +320,9 @@ class SiteService
         });
     }
 
-    public function siteDetailOutlet($site_id, $request)
+    public function siteDetailOutlet($site_id)
     {
-        $brand = Str::upper($request->brand);
+        $brand = auth('api')->user()->brand;
 
         if (!$brand) {
             throw new \Exception('Brand is required', 400);
