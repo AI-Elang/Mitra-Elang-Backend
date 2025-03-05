@@ -194,6 +194,7 @@ public function listKecamatanByMc()
             ->where('STATUS', 'VALID')
             ->first();
 
+
         if (!$data) {
             throw new \Exception('Data not found', 404);
         }
