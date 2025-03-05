@@ -13,17 +13,49 @@ class OutletController extends Controller
     {
         $this->service = $service;
     }
-
-    public function listOutletByPartnerName($pt, Request $request)
+    public function listOutletByPartnerName(Request $request)
     {
         try {
-            $data = $this->service->listOutletByPartnerName($pt, $request);
+            // Ensure the entire request is passed
+            $data = $this->service->listOutletByPartnerName($request);
+
             $result = [
                 'data' => $data,
                 'meta' => [
                     'status_code' => 200,
                     'success' => true,
-                    'message' => 'Success get list outlet by partner name'
+                    'message' => 'Success get list Outlet by Partner Name'
+                ],
+            ];
+
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json([
+                'meta' => [
+                    'status_code' => 400,
+                    'success' => false,
+                    'error' => $e->getMessage()
+                ]
+            ], 400);
+        }
+    }
+
+
+public function listKecamatanByMc()
+    {
+        try {
+            $data = $this->service->listKecamatanByMc();
+            $result = [
+                'data' => $data->transform(function ($data) {
+                    return [
+                        'kecamatan' => $data->KEC_BRANCHH,
+                        'pt_name' => $data->NAMA_PT
+                    ];
+                }),
+                'meta' => [
+                    'status_code' => 200,
+                    'success' => true,
+                    'message' => 'Success get list Kecamatan by MC'
                 ],
             ];
 
@@ -33,10 +65,10 @@ class OutletController extends Controller
         }
     }
 
-    public function dropdown(Request $request)
+    public function dropdown()
     {
         try {
-            $data = $this->service->dropdown($request);
+            $data = $this->service->dropdown();
             $result = [
                 'data' => $data,
                 'meta' => [

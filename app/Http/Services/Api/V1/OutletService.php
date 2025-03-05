@@ -1,22 +1,29 @@
 <?php
 
 namespace App\Http\Services\Api\V1;
+use http\Client\Curl\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Http\Request;
 
 class OutletService
 {
-    public function listOutletByPartnerName($pt, $request)
+    public function listOutletByPartnerName(Request $request) // ✅ Ensure Request is expected
     {
-        $partner_name = $pt;
-        $mc_id = $request->mc;
+        $partner_name = $request->route('pt');
+        $kecamatan = $request->route('kecamatan');
+        $mc_id = auth('api')->user()->territory_id;
 
-        if (!$partner_name) {
+        if (!$partner_name || $partner_name == ":pt") {
             throw new \Exception('Partner Name is required', 400);
         }
 
-        if (!$mc_id) {
+        if (!$mc_id || $mc_id == ":mc_id") {
             throw new \Exception('MC is required', 400);
+        }
+
+        if (!$kecamatan || $kecamatan == ":kecamatan") {
+            throw new \Exception('Kecamatan is required', 400);
         }
 
         $mc = DB::table('territories')
@@ -34,7 +41,7 @@ class OutletService
         $mc_brand = Str::substr($mc->name, -3);
 
         if ($mc_brand != $mc->brand) {
-            throw new \Exception('Brand with the name of ' . $mc->brand . ' does not match with Microcluster\'s brand of ' . $mc_brand, 400);
+            throw new \Exception('Brand mismatch: ' . $mc->brand . ' vs ' . $mc_brand, 400);
         }
 
         $data = DB::connection('pgsql2')
@@ -52,14 +59,70 @@ class OutletService
             ->where('brand', $mc_brand)
             ->where('STATUS', 'VALID')
             ->whereNotNull('CATEGORY')
+            ->where('KEC_BRANCHH', $kecamatan)
             ->get();
 
         return $data;
     }
 
-    public function dropdown($request)
+
+
+public function listKecamatanByMc()
     {
-        $mc = $request->mc ?? null;
+        $brand = auth('api')->user()->brand;
+        $mc_id = auth('api')->user()->territory_id;
+        $username = auth('api')->user()->username;
+
+        if (!$brand) {
+            throw new \Exception('Brand is required', 400);
+        }
+
+        if ($brand != '3ID' && $brand != 'IM3') {
+            throw new \Exception('Invalid Brand', 400);
+        }
+
+        $mc_data = DB::table('territories')
+            ->select("id", "id_secondary", "name")
+            ->where('id', $mc_id)
+            ->where('is_active', 1)
+            ->first();
+
+        if (!$mc_data) {
+            throw new \Exception('Microcluster not found', 404);
+        }
+
+        $mc_upper = Str::upper($mc_data->name);
+        // Check if string not contains 'MC-'
+        if (!Str::contains($mc_upper, 'MC-')) {
+            throw new \Exception('Invalid Microcluster ID', 400);
+        }
+
+        // Get the name and brand from the microcluster name
+        $mc_name = Str::substr($mc_upper, 0, -4);
+        $mc_brand = Str::substr($mc_upper, -3);
+
+        if ($mc_brand !== $brand) {
+            throw new \Exception('Brand with the name of ' . $brand . ' does not match with Microcluster\'s brand of ' . $mc_brand, 400);
+        }
+
+
+        // To Do : To CONNECT TO SERVER
+        $data = DB::connection('pgsql2')
+            ->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+            ->selectRaw('DISTINCT "KEC_BRANCHH", "NAMA_PT"')
+            ->where('MC', $mc_name)
+            ->where("PARTNER_ID", $username)
+            ->whereNotNull("NAMA_PT")
+           ->get();
+//            ->toRawSql();
+
+        return $data;
+    }
+
+
+        public function dropdown()
+    {
+        $mc = auth()->user()->territory_id;
 
         if (!$mc) {
             throw new \Exception('MC is required', 400);

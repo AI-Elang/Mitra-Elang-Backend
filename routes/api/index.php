@@ -26,7 +26,9 @@ Route::prefix('v1')->group(function () {
             Route::prefix('outlet')->group(function () {
                 Route::get('dropdown-pt', 'dropdown');
                 Route::get('locations', 'listOutletLocation');
-                Route::get('{pt}', 'listOutletByPartnerName');
+                Route::get('pt', 'listKecamatanByMc');
+                Route::get('{pt}/{kecamatan}', 'listOutletByPartnerName');
+
                 Route::prefix('detail')->group(function () {
                     Route::get('{qr_code}', 'outletDetail');
                     Route::get('{qr_code}/ga', 'outletDetailGa');
