@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Http\Services\Api\V1;
-use http\Client\Curl\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;

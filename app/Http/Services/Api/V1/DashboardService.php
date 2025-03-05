@@ -214,12 +214,45 @@ class DashboardService
     public function account()
     {
         $username = auth('api')->user()->username;
-        $profile = DB::table('mitra_table')
-            ->select('id_mitra', 'nama_mitra', 'nama_owner', 'type')
-            ->where('is_active', True)
+
+        // Ambil data dari database kedua
+        $site = DB::connection('pgsql2')->table('ELANG_MTD_PARTNER')
+            ->where('PARTNER_NAME', $username)
+            ->where('STATUS', 'VALID')
+            ->select(
+                DB::raw('"ADD SITE" as site_count'), // Fix for string literal
+                DB::raw('"QR_CODE" as outlet_count') // Fix for column aliasing
+            )
+            ->first();
+
+
+        if (!$site) {
+            $message = 'Site data not found';
+            return $message;
+        }
+
+        // Ambil data dari database pertama
+        $profile = DB::connection('pgsql')->table('mitra_table')
+            ->select('id_mitra',
+                'nama_mitra',
+                'nama_owner',
+                'type',
+                DB::raw('CAST(0 AS INTEGER) as site_count'))
+            ->where('is_active', true)
             ->where('id_mitra', $username)
-            ->get();
-        return $profile;
+            ->first(); // Ambil satu baris data
+
+        if (!$profile) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mitra not found'
+            ], 404);
+        }
+
+        // Gabungkan data dari dua database
+        $mergedData = array_merge((array) $profile, (array) $site);
+
+        return $mergedData;
     }
 }
 

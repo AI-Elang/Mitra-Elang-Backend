@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\OutletController;
+use App\Http\Controllers\Api\V1\SiteController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -35,6 +36,20 @@ Route::prefix('v1')->group(function () {
                     Route::get('{qr_code}/sec', 'outletDetailSec');
                     Route::get('{qr_code}/supply', 'outletDetailSupply');
                     Route::get('{qr_code}/demand', 'outletDetailDemand');
+                });
+            });
+
+            Route::controller(SiteController::class)->group(function () {
+                Route::prefix('sites')->group(function () {
+                    Route::get('pt/{mc_id}', 'listKecamatanByMc');
+                    Route::get('/', 'listSiteByKecamatan');
+                    Route::get('/dashboard', 'getSiteDashboard');
+                    Route::get('{site_id}/detail', 'siteDetail');
+                    Route::get('{site_id}/detail/revenue', 'siteDetailRevenue');
+                    Route::get('{site_id}/detail/rgu', 'siteDetailRgu');
+                    Route::get('{site_id}/detail/ga', 'siteDetailGa');
+                    Route::get('{site_id}/detail/vlr', 'siteDetailVlr');
+                    Route::get('{site_id}/detail/outlet', 'siteDetailOutlet');
                 });
             });
         });
