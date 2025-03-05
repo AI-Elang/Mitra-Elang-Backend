@@ -235,7 +235,6 @@ class DashboardService
         $profile = DB::connection('pgsql')->table('mitra_table')
             ->select('id_mitra',
                 'nama_mitra',
-                'nama_owner',
                 'type',
                 DB::raw('CAST(0 AS INTEGER) as site_count'))
             ->where('is_active', true)
