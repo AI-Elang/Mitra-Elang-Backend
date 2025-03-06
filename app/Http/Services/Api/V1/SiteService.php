@@ -11,6 +11,7 @@ class SiteService
     {
         $mc_id = auth('api')->user()->territory_id;
         $brand = auth('api')->user()->brand;
+        $username = auth('api')->user()->username;
 
         if (!$brand) {
             throw new \Exception('Brand is required', 400);
@@ -59,6 +60,7 @@ class SiteService
             "' . $pt_column . '" AS pt_name,
             "LRK" AS lrk
             ')
+            ->where($pt_column, $username)
             ->where('MC', $mc_name)
             ->get();
 
