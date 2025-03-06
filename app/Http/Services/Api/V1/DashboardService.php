@@ -127,7 +127,7 @@ class DashboardService
                     if (ctype_digit($item->nilai)) {
                         $item->nilai = (int) $item->nilai; // Convert to integer
                     } else {
-                        $item->nilai = (float) $item->nilai; // Convert to float
+                        $item->nilai = round($item->nilai,1);// Convert to float
                     }
                 }
                 if (!empty($item->last_update)) {
@@ -160,7 +160,8 @@ class DashboardService
                         if (ctype_digit(strval($value))) {
                             $item->$key = (int) $value; // Convert to integer
                         } else {
-                            $item->$key = (float) $value; // Convert to float
+                            $item->$key = round($value, 0);
+                            // Convert to float
                         }
                     }
                 }
