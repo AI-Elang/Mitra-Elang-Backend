@@ -57,12 +57,12 @@ Route::prefix('v1')->group(function () {
             Route::controller(DseAiController::class)->group(function () {
                 Route::prefix('dse-ai')->group(function () {
                     Route::get('dashboard/data', 'getDseAiDashboard');
-                    Route::get('{mc_id}', 'listMcById');
+                    Route::get('/', 'listMcById');
                     Route::get('outlet/{dse_id}', 'listOutletByDseDate');
                     Route::get('outlet/{outlet_id}/images', 'getOutletImages');
-                    Route::get('{mc_id}/comparisons', 'getDseAiComparisons');
-                    Route::get('{mc_id}/summary', 'getDseAiSummary');
-                    Route::get('{mc_id}/daily', 'getDseAiDaily');
+                    Route::get('comparisons', 'getDseAiComparisons');
+                    Route::get('summary', 'getDseAiSummary');
+                    Route::get('daily', 'getDseAiDaily');
                 });
             });
         });

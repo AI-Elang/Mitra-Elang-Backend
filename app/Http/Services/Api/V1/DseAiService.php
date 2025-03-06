@@ -8,8 +8,9 @@ use Illuminate\Support\Facades\DB;
 class DseAiService
 {
 
-    public function listMcById($mcId)
+    public function listMcById()
     {
+        $mcId = auth()->user()->territory_id;
         if ($mcId == 0 || $mcId == null) {
             throw new \Exception('MC ID is required', 400);
         }
@@ -120,6 +121,7 @@ class DseAiService
 
     public function listOutletByDseDate($dseId, $request)
     {
+        $username = auth('api')->user()->username;
         if ($dseId == 0 || $dseId == null) {
             throw new \Exception('DSE ID is required', 400);
         }
@@ -162,7 +164,8 @@ class DseAiService
             ->select('QR_CODE as outlet_id', 'NAMA_TOKO as outlet_name', 'STATUS as category')
             ->whereIn('QR_CODE', $data->pluck('outlet_id')->toArray())
             ->where('STATUS', 'VALID')
-            ->get();
+            ->where('PARTNER_ID', $username)
+            ->distinct('DSE_CODE');
 
         foreach ($data as $d) {
             $outlet = $outlet_name->where('outlet_id', $d->outlet_id)->first();
@@ -239,8 +242,10 @@ class DseAiService
         return $data;
     }
 
-    public function getDseAiComparisons($mcId)
+    public function getDseAiComparisons()
     {
+        $mcId = auth()->user()->territory_id;
+
         if ($mcId == 0 || $mcId == null) {
             throw new \Exception('MC ID is required', 400);
         }
@@ -340,8 +345,9 @@ class DseAiService
         return $dse;
     }
 
-    public function getDseAiSummary($mcId, $request)
+    public function getDseAiSummary($request)
     {
+        $mcId = auth()->user()->territory_id;
         if ($mcId == 0 || $mcId == null) {
             throw new \Exception('MC ID is required', 400);
         }
@@ -429,8 +435,9 @@ class DseAiService
         return $dse;
     }
 
-    public function getDseAiDaily($mcId, $request)
+    public function getDseAiDaily($request)
     {
+        $mcId = auth()->user()->territory_id;
         $date = $request->date;
 
         if ($date == null) {

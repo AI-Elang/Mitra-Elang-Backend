@@ -16,10 +16,10 @@ class DseAiController extends Controller
         $this->service = $service;
     }
 
-    public function listMcById($mcId)
+    public function listMcById()
     {
         try {
-            $data = $this->service->listMcById($mcId);
+            $data = $this->service->listMcById();
             $result = new DseAiCollection($data);
 
             return $this->respond($result);
@@ -66,10 +66,10 @@ class DseAiController extends Controller
         }
     }
 
-    public function getDseAiComparisons($mcId)
+    public function getDseAiComparisons()
     {
         try {
-            $data = $this->service->getDseAiComparisons($mcId);
+            $data = $this->service->getDseAiComparisons();
             $result = [
                 'data' => $data,
                 'meta' => [
@@ -85,10 +85,10 @@ class DseAiController extends Controller
         }
     }
 
-    public function getDseAiSummary($mcId, Request $request)
+    public function getDseAiSummary(Request $request)
     {
         try {
-            $data = $this->service->getDseAiSummary($mcId, $request);
+            $data = $this->service->getDseAiSummary($request);
             $result = [
                 'data' => $data,
                 'meta' => [
@@ -104,10 +104,10 @@ class DseAiController extends Controller
         }
     }
 
-    public function getDseAiDaily($mcId, Request $request)
+    public function getDseAiDaily(Request $request)
     {
         try {
-            $data = $this->service->getDseAiDaily($mcId, $request);
+            $data = $this->service->getDseAiDaily($request);
             $result = [
                 'data' => $data,
                 'meta' => [
