@@ -121,7 +121,6 @@ class DseAiService
 
     public function listOutletByDseDate($dseId, $request)
     {
-        $username = auth('api')->user()->username;
         if ($dseId == 0 || $dseId == null) {
             throw new \Exception('DSE ID is required', 400);
         }
@@ -164,8 +163,7 @@ class DseAiService
             ->select('QR_CODE as outlet_id', 'NAMA_TOKO as outlet_name', 'STATUS as category')
             ->whereIn('QR_CODE', $data->pluck('outlet_id')->toArray())
             ->where('STATUS', 'VALID')
-            ->where('PARTNER_ID', $username)
-            ->distinct('DSE_CODE');
+            ->get();
 
         foreach ($data as $d) {
             $outlet = $outlet_name->where('outlet_id', $d->outlet_id)->first();
@@ -437,6 +435,7 @@ class DseAiService
 
     public function getDseAiDaily($request)
     {
+        $username = auth()->user()->username;
         $mcId = auth()->user()->territory_id;
         $date = $request->date;
 
@@ -444,9 +443,21 @@ class DseAiService
             throw new \Exception('Date is required', 400);
         }
 
+        $mcName = DB::table('territory_dashboards')
+            ->where('id', $mcId)
+            ->value('name');
+
+        $distinctDse = DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+            ->where('PARTNER_ID', $username)
+            ->where('MC', $mcName)
+            ->distinct()
+            ->pluck('DSE_CODE')
+            ->toArray();
+
         $dse = DB::table('dse as d')
             ->select('d.id_dse as dse_id', 'd.name as dse_name', 'd.id_unit', 'd.status', 't.name as territory_name', 't.id as territory_id')
             ->join('territories as t', 'd.id_unit', '=', 't.id')
+            ->whereIn('d.id_dse', $distinctDse)
             ->where('t.id', $mcId)
             ->where('t.is_active', 1)
             ->get();
@@ -456,59 +467,36 @@ class DseAiService
         $dse_daily_data = DB::table('showcases')
             ->select(
                 'username',
-                DB::raw('COALESCE(SUM(voucher_im3), 0) as voucher_im3'),
-                DB::raw('COALESCE(SUM(voucher_tri), 0) as voucher_tri'),
-                DB::raw('COALESCE(SUM(perdana_im3), 0) as perdana_im3'),
-                DB::raw('COALESCE(SUM(perdana_tri), 0) as perdana_tri'),
-                DB::raw('COALESCE(SUM(sellin_sp), 0) as sp'),
-                DB::raw('COALESCE(SUM(sellin_voucher), 0) as vou'),
-                DB::raw('COALESCE(SUM(sellin_salmo), 0) as salmo'),
-                DB::raw('COALESCE(COUNT(outlet_id), 0) as visit'),
+                DB::raw('SUM(voucher_im3) as voucher_im3'),
+                DB::raw('SUM(voucher_tri) as voucher_tri'),
+                DB::raw('SUM(perdana_im3) as perdana_im3'),
+                DB::raw('SUM(perdana_tri) as perdana_tri'),
+                DB::raw('SUM(sellin_sp) as sp'),
+                DB::raw('SUM(sellin_voucher) as vou'),
+                DB::raw('SUM(sellin_salmo) as salmo'),
+                DB::raw('COUNT(outlet_id) as visit')
             )
-            ->groupBy('username')
             ->whereIn('username', $dseIds)
-            ->whereRaw('DATE(date) = ?', [$date])
-            ->get();
+            ->whereDate('date', $date)
+            ->groupBy('username')
+            ->get()
+            ->keyBy('username');
 
-        // Add showcase_in, showcase_out, and duration
-        foreach ($dse_daily_data as $d) {
-            $showcase_in = DB::table('showcases')
-                ->selectRaw('COALESCE(date::TEXT, \'-\') as date')
-                ->where('username', $d->username)
-                ->whereRaw('DATE(date) = ?', [$date])
-                ->orderBy('date')
-                ->first();
+        $showcase_in_data = DB::table('showcases')
+            ->select('username', DB::raw('MIN(date) as checkin'))
+            ->whereDate('date', $date)
+            ->whereIn('username', $dseIds)
+            ->groupBy('username')
+            ->get()
+            ->keyBy('username');
 
-            // Ambil check-out showcase
-            $showcase_out = DB::table('showcases')
-                ->selectRaw('COALESCE(status_timestamp::TEXT, \'-\') as status_timestamp')
-                ->where('username', $d->username)
-                ->whereRaw('DATE(date) = ?', [$date])
-                ->orderBy('status_timestamp', 'desc')
-                ->first();
-
-            $zero = DB::table('showcases')
-                ->selectRaw('COALESCE(COUNT(outlet_id), 0) as zero')
-                ->where('username', $d->username)
-                ->whereRaw('DATE(date) = ?', [$date])
-                ->whereRaw('sellin_sp = 0 AND sellin_voucher = 0 AND sellin_salmo = 0')
-                ->first();
-
-            $d->checkin = ($showcase_in && $showcase_in->date !== '-' && !empty($showcase_in->date))
-                ? Carbon::parse($showcase_in->date)->format('H:i:s')
-                : '-';
-
-            $d->checkout = ($showcase_out && $showcase_out->status_timestamp !== '-' && !empty($showcase_out->status_timestamp))
-                ? Carbon::parse($showcase_out->status_timestamp)->format('H:i:s')
-                : '-';
-
-            // Add durasi from checkout - checkin
-            $d->duration = ($d->checkin !== '-' && $d->checkout !== '-')
-                ? Carbon::parse($showcase_in->date)->diff(Carbon::parse($showcase_out->status_timestamp))->format('%H:%I:%S')
-                : '-';
-
-            $d->zero = $zero->zero;
-        }
+        $showcase_out_data = DB::table('showcases')
+            ->select('username', DB::raw('MAX(status_timestamp) as checkout'))
+            ->whereDate('date', $date)
+            ->whereIn('username', $dseIds)
+            ->groupBy('username')
+            ->get()
+            ->keyBy('username');
 
         foreach ($dse as $d) {
             $d->perdana_im3 = "0";
@@ -524,25 +512,34 @@ class DseAiService
             $d->checkout = '-';
             $d->duration = '-';
 
-            foreach ($dse_daily_data as $dtd) {
-                if ($d->dse_id == $dtd->username) {
-                    $d->perdana_im3 = $this->format_number($dtd->perdana_im3);
-                    $d->perdana_tri = $this->format_number($dtd->perdana_tri);
-                    $d->voucher_im3 = $this->format_number($dtd->voucher_im3);
-                    $d->voucher_tri = $this->format_number($dtd->voucher_tri);
-                    $d->visit = $this->format_number($dtd->visit);
-                    $d->sp = $this->format_number($dtd->sp);
-                    $d->vou = $this->format_number($dtd->vou);
-                    $d->salmo = $this->format_number($dtd->salmo);
-                    $d->checkin = $dtd->checkin;
-                    $d->checkout = $dtd->checkout;
-                    $d->duration = $dtd->duration;
-                }
+            if (isset($dse_daily_data[$d->dse_id])) {
+                $dtd = $dse_daily_data[$d->dse_id];
+                $d->perdana_im3 = $this->format_number($dtd->perdana_im3 ?? 0);
+                $d->perdana_tri = $this->format_number($dtd->perdana_tri ?? 0);
+                $d->voucher_im3 = $this->format_number($dtd->voucher_im3 ?? 0);
+                $d->voucher_tri = $this->format_number($dtd->voucher_tri ?? 0);
+                $d->visit = $this->format_number($dtd->visit ?? 0);
+                $d->sp = $this->format_number($dtd->sp ?? 0);
+                $d->vou = $this->format_number($dtd->vou ?? 0);
+                $d->salmo = $this->format_number($dtd->salmo ?? 0);
+            }
+
+            if (isset($showcase_in_data[$d->dse_id])) {
+                $d->checkin = Carbon::parse($showcase_in_data[$d->dse_id]->checkin)->format('H:i:s');
+            }
+
+            if (isset($showcase_out_data[$d->dse_id])) {
+                $d->checkout = Carbon::parse($showcase_out_data[$d->dse_id]->checkout)->format('H:i:s');
+            }
+
+            if ($d->checkin !== '-' && $d->checkout !== '-') {
+                $d->duration = Carbon::parse($showcase_in_data[$d->dse_id]->checkin)
+                    ->diff(Carbon::parse($showcase_out_data[$d->dse_id]->checkout))
+                    ->format('%H:%I:%S');
             }
         }
 
-        // Show only the selected data
-        $dse = collect($dse)->transform(function ($item) {
+        return $dse->map(function ($item) {
             return [
                 'id' => $item->dse_id,
                 'name' => $item->dse_name,
@@ -562,9 +559,8 @@ class DseAiService
                 'duration' => $item->duration,
             ];
         });
-
-        return $dse;
     }
+
 
     public function getDseAiDashboard($request)
     {
