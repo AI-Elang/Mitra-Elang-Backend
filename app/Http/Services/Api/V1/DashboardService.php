@@ -154,31 +154,17 @@ class DashboardService
             ->orderBy('URUTAN') // Order by 'urutan' in ascending order
             ->get()
             ->map(function ($item) {
-                if (!empty($item->target)) {
-                    $item->target = (int) $item->target;
-                }
+                $item->target = !empty($item->target) ? (int) $item->target : 0;
+                $item->mtd = !empty($item->mtd) ? (int) $item->mtd : 0;
+                $item->GROWTH = !empty($item->GROWTH) ? round($item->GROWTH, 2) : 0;
+                $item->achievement = !empty($item->achievement) ? round($item->achievement, 2) : 0;
+                $item->URUTAN = !empty($item->URUTAN) ? (int) $item->URUTAN : 0;
 
-                if(!empty($item->mtd)){
-                    $item->mtd = (int) $item->mtd;
-                }
+                // Format 'mtd_date' dan 'last_update' jika ada, jika tidak beri nilai kosong
+                $item->mtd_date = !empty($item->mtd_date) ? Carbon::parse($item->mtd_date)->format('d-m-Y') : '00-00-0000';
+                $item->last_update = !empty($item->last_update) ? Carbon::parse($item->last_update)->format('d-m-Y') : '00-00-0000';
 
-                if(!empty($item->GROWTH)){
-                    $item->GROWTH = round($item->GROWTH, 2);
-                }
-
-                if(!empty($item->achievement)) {
-                    $item->achievement = round($item->achievement, 2);
-                }
-
-                // Format 'last_update' to DD-MM-YYYY if it exists
-                if (!empty($item->mtd_date)) {
-                    $item->mtd_date = Carbon::parse($item->mtd_date)->format('d-m-Y');
-                }
-                if (!empty($item->last_update)) {
-                    $item->last_update = Carbon::parse($item->last_update)->format('d-m-Y');
-                }
-
-                return $item; // Return modified item after processing all fields
+                return $item;
             });
 
         return $profile;
