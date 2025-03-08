@@ -345,6 +345,7 @@ class DseAiService
 
     public function getDseAiSummary($request)
     {
+        $username = auth()->user()->username;
         $mcId = auth()->user()->territory_id;
         if ($mcId == 0 || $mcId == null) {
             throw new \Exception('MC ID is required', 400);
@@ -357,10 +358,22 @@ class DseAiService
             throw new \Exception('Month and year are required', 400);
         }
 
+        $mcName = DB::table('territory_dashboards')
+            ->where('id', $mcId)
+            ->value('name');
+
+        $distinctDse = DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+            ->where('PARTNER_ID', $username)
+            ->where('MC', $mcName)
+            ->distinct()
+            ->pluck('DSE_CODE')
+            ->toArray();
+
         $dse = DB::table('dse as d')
             ->select('d.id_dse as dse_id', 'd.name as dse_name', 'd.id_unit', 'd.status', 't.name as territory_name', 't.id as territory_id')
             ->join('territories as t', 'd.id_unit', '=', 't.id')
             ->where('t.id', $mcId)
+            ->whereIn('d.id_dse', $distinctDse)
             ->where('t.is_active', 1)
             ->get();
 

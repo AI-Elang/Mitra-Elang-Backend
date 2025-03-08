@@ -92,7 +92,7 @@ class DashboardController extends Controller
                 'meta' => [
                     'status_code' => 200,
                     'success' => true,
-                    'message' => 'Success Get Profile',
+                    'message' => 'Success Get Account',
                 ],
             ]);
         } catch (\Exception $e) {
