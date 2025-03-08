@@ -154,16 +154,20 @@ class DashboardService
             ->orderBy('URUTAN') // Order by 'urutan' in ascending order
             ->get()
             ->map(function ($item) {
-                foreach ($item as $key => $value) {
-                    if (is_numeric($value)) {
-                        // Check if value is an integer (no decimal point)
-                        if (ctype_digit(strval($value))) {
-                            $item->$key = (int) $value; // Convert to integer
-                        } else {
-                            $item->$key = round($value, 2);
-                            // Convert to float
-                        }
-                    }
+                if (!empty($item->target)) {
+                    $item->target = (int) $item->target;
+                }
+
+                if(!empty($item->mtd)){
+                    $item->mtd = (int) $item->mtd;
+                }
+
+                if(!empty($item->GROWTH)){
+                    $item->GROWTH = round($item->GROWTH, 2);
+                }
+
+                if(!empty($item->achievement)) {
+                    $item->achievement = round($item->achievement, 2);
                 }
 
                 // Format 'last_update' to DD-MM-YYYY if it exists
