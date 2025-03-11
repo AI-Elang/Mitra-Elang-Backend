@@ -11,7 +11,19 @@ class SiteService
     {
         $mc_id = auth('api')->user()->territory_id;
         $brand = auth('api')->user()->brand;
+        $roleLabel = auth('api')->user()->role_label;
         $username = auth('api')->user()->username;
+
+        if ($roleLabel == 'MPC' || $roleLabel == 'MP3') {
+            $filter_pt = DB::connection('pgsql')->table('mitra_table')
+                ->select('id_mitra', 'nama_mitra')
+                ->where('is_active', true)
+                ->where('id_mitra', $username)
+                ->first()->nama_mitra; // Ambil satu baris data
+        }
+        else if ($roleLabel === 'MITRAIM3' || '3KIOSK') {
+            $filter_pt = $username;
+        }
 
         if (!$brand) {
             throw new \Exception('Brand is required', 400);
@@ -60,7 +72,7 @@ class SiteService
             "' . $pt_column . '" AS pt_name,
             "LRK" AS lrk
             ')
-            ->where($pt_column, $username)
+            ->where($pt_column, $filter_pt)
             ->where('MC', $mc_name)
             ->get();
 
