@@ -205,22 +205,7 @@ class DashboardService
     public function account()
     {
         $username = auth('api')->user()->username;
-
-        // Ambil data dari database kedua
-        $site = DB::connection('pgsql2')->table('ELANG_MTD_PARTNER')
-            ->where('PARTNER_NAME', $username)
-            ->where('STATUS', 'VALID')
-            ->select(
-                DB::raw('"ADD SITE" as site_count'), // Fix for string literal
-                DB::raw('"QR_CODE" as outlet_count') // Fix for column aliasing
-            )
-            ->first();
-
-
-        if (!$site) {
-            $message = 'Site data not found';
-            return $message;
-        }
+        $roleLabel = auth('api')->user()->role_label;
 
         // Ambil data dari database pertama
         $profile = DB::connection('pgsql')->table('mitra_table')
@@ -233,10 +218,29 @@ class DashboardService
             ->first(); // Ambil satu baris data
 
         if (!$profile) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Mitra not found'
-            ], 404);
+            return 'Profile data not found';
+        }
+
+        if ($roleLabel === 'MPC' || $roleLabel === 'MP3') {
+            $filter = substr($profile->nama_mitra, 0, -4) . ', PT';
+
+        } else if ($roleLabel === 'MITRAIM3' || '3KIOSK') {
+                $filter = $username;
+        }
+
+        // Ambil data dari database kedua
+        $site = DB::connection('pgsql2')->table('ELANG_MTD_PARTNER')
+            ->where('PARTNER_NAME', $filter)
+            ->where('STATUS', 'VALID')
+            ->select(
+                DB::raw('"ADD SITE" as site_count'), // Fix for string literal
+                DB::raw('"QR_CODE" as outlet_count') // Fix for column aliasing
+            )
+            ->first();
+
+
+        if (!$site) {
+            return 'Site data not found';
         }
 
         // Gabungkan data dari dua database
