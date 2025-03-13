@@ -25,6 +25,8 @@ class SiteService
             $filter_pt = $username;
         }
 
+        $filter_pt = substr($filter_pt, 0, -4) . '_ PT';
+
         if (!$brand) {
             throw new \Exception('Brand is required', 400);
         }
