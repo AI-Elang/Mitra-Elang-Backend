@@ -20,12 +20,13 @@ class SiteService
                 ->where('is_active', true)
                 ->where('id_mitra', $username)
                 ->first()->nama_mitra; // Ambil satu baris data
+            $filter_pt = substr($filter_pt, 0, -4) . '_ PT';
         }
         else if ($roleLabel === 'MITRAIM3' || '3KIOSK') {
             $filter_pt = $username;
         }
 
-        $filter_pt = substr($filter_pt, 0, -4) . '_ PT';
+
 
         if (!$brand) {
             throw new \Exception('Brand is required', 400);
