@@ -3,6 +3,7 @@
 namespace App\Http\Services\Api\V1;
 
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DashboardService
@@ -22,11 +23,24 @@ class DashboardService
      * Method untuk mengambil id region dari id mc yang diberikan.
      */
 
-    public function dashboard()
+    public function dashboard(Request $request)
     {
         $mcId = auth('api')->user()->territory_id;
         $useRole = auth('api')->user()->role_label;
+        $role = auth('api')->user()->role;
         $username = auth('api')->user()->username;
+        $branch = $request->get('branch');
+
+        if ($role == 6) {
+            $usernameFilter = auth('api')->user()->username;
+        }
+        if ($role == 7) {
+            $usernameFilter = DB::connection('pgsql')->table('mitra_table')
+                ->select('nama_mitra')
+                ->where('id_mitra', $username)
+                ->first()
+                ->nama_mitra;
+        }
         $regionId = $this->getRegionId($mcId);
 
         $parameters = DB::table('parameter_mitra as p')
@@ -56,7 +70,10 @@ class DashboardService
             // Fetch parameter value safely
             $parameterValue = DB::table($param->parameter_table)
                 ->select($param->parameter_column, 'last_update')
-                ->where('id_mitra', $username)
+                ->where('id_mitra', $usernameFilter)
+                ->when($role == 7, function ($query) use ($branch) {
+                    return $query->where('territory', $branch);
+                })
                 ->first();
 
             if (!isset($data[$param->parameter_id])) {
@@ -81,7 +98,7 @@ class DashboardService
             // Fetch all subparameter values safely
             $subparameterValues = DB::table($param->subparameter_table)
                 ->select($param->subparameter_column, 'last_update')
-                ->where('id_mitra', $username)
+                ->where('id_mitra', $usernameFilter)
                 ->get();
 
             foreach ($subparameterValues as $subparamValue) {

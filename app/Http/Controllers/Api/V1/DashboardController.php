@@ -14,10 +14,10 @@ class DashboardController extends Controller
         $this->service = $service;
     }
 
-    public function dashboard()
+    public function dashboard(Request $request)
     {
         try{
-            $data = $this->service->dashboard();
+            $data = $this->service->dashboard($request);
             return $this->respond([
                 'data' => $data,
                 'meta' => [
