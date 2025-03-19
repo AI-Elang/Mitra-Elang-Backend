@@ -248,5 +248,23 @@ class DashboardService
 
         return $mergedData;
     }
+
+    public function dropdown()
+    {
+        $username = auth('api')->user()->username;
+        $ptName = DB::table('mitra_table')
+            ->select('nama_mitra')
+            ->where('id_mitra', $username)
+            ->first();
+
+        // Pakai pluck untuk ambil array value dari kolom branch
+        $branches = DB::table('mitra_table')
+            ->where('nama_mitra', $ptName->nama_mitra)
+            ->distinct()
+            ->pluck('branch'); // Ini auto jadi array
+
+        return $branches;
+    }
+
 }
 

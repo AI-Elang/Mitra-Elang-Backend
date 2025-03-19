@@ -21,6 +21,7 @@ Route::prefix('v1')->group(function () {
                 Route::get('insentif', 'insentif');
                 Route::get('profile', 'profile');
                 Route::get('sliders', 'sliders');
+                Route::get('dropdown', 'dropdown');
             });
         });
 

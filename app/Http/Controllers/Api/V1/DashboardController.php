@@ -99,4 +99,21 @@ class DashboardController extends Controller
             return $this->ApiExceptionError($e->getMessage());
         }
     }
+
+    public function dropdown()
+    {
+        try {
+            $data = $this->service->dropdown();
+            return $this->respond([
+                'data' => $data,
+                'meta' => [
+                    'status_code' => 200,
+                    'success' => true,
+                    'message' => 'Success Get Dropdown',
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return $this->ApiExceptionError($e->getMessage());
+        }
+    }
 }
