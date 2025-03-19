@@ -99,6 +99,9 @@ class DashboardService
             $subparameterValues = DB::table($param->subparameter_table)
                 ->select($param->subparameter_column, 'last_update')
                 ->where('id_mitra', $usernameFilter)
+                ->when($role == 7, function ($query) use ($branch) {
+                    return $query->where('territory', $branch);
+                })
                 ->get();
 
             foreach ($subparameterValues as $subparamValue) {
