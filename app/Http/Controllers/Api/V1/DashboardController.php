@@ -48,10 +48,10 @@ class DashboardController extends Controller
         }
     }
 
-    public function profile()
+    public function profile(Request $request)
     {
         try{
-            $data = $this->service->profile();
+            $data = $this->service->profile($request);
             return $this->respond([
                 'data' => $data,
                 'meta' => [
@@ -83,10 +83,10 @@ class DashboardController extends Controller
     }
 
 
-    public function account()
+    public function account(Request $request)
     {
         try {
-            $data = $this->service->account();
+            $data = $this->service->account($request);
             return $this->respond([
                 'data' => $data,
                 'meta' => [

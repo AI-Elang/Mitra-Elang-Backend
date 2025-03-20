@@ -160,37 +160,55 @@ class DashboardService
         return $insentif;
     }
 
-    public function profile()
+    public function profile(Request $request)
     {
         $username = auth('api')->user()->username;
         $mcid = auth('api')->user()->territory_id;
+        $role = auth('api')->user()->role;
+        $branch = $request->get('branch');
+
+        $pt_name = DB::table('mitra_table')
+            ->select('nama_mitra')
+            ->where('id_mitra', $username)
+            ->first()
+            ->nama_mitra;
+
         $mc_name = DB::table('territory_dashboards')
             ->select('name')
             ->where('id', $mcid)
             ->first();
         $profile = DB::table('elang_mitra_sampah')
-            ->where('id_mitra', $username)
-            ->where('MC', $mc_name->name)
-            ->orderBy('URUTAN') // Order by 'urutan' in ascending order
-            ->get()
-            ->map(function ($item) {
-                $item->target = !empty($item->target) ? (int) $item->target : 0;
-                $item->mtd = !empty($item->mtd) ? (int) $item->mtd : 0;
-                $item->GROWTH = !empty($item->GROWTH) ? round($item->GROWTH, 2) : 0;
-                $item->achievement = !empty($item->achievement) ? round($item->achievement, 2) : 0;
-                $item->URUTAN = !empty($item->URUTAN) ? (int) $item->URUTAN : 0;
 
-                // Format 'mtd_date' dan 'last_update' jika ada, jika tidak beri nilai kosong
-                $item->mtd_date = !empty($item->mtd_date) ? Carbon::parse($item->mtd_date)->format('d-m-Y') : '00-00-0000';
-                $item->last_update = !empty($item->last_update) ? Carbon::parse($item->last_update)->format('d-m-Y') : '00-00-0000';
+            ->orderBy('URUTAN'); // Order by 'URUTAN' in ascending order
 
-                return $item;
-            });
+//        dd($profile->get());
+        if ($role == 7) {
+            $profile->where('MC', $branch)
+                    ->where('id_mitra', $pt_name);
+        } else if ($role == 6) {
+            $profile->where('MC', $mc_name->name)
+                    ->where('id_mitra', $username);
+        }
 
-        return $profile;
+// Eksekusi query dan ambil datanya
+        $profileData = $profile->get()->map(function ($item) {
+            $item->target = !empty($item->target) ? (int) $item->target : 0;
+            $item->mtd = !empty($item->mtd) ? (int) $item->mtd : 0;
+            $item->GROWTH = !empty($item->GROWTH) ? round($item->GROWTH, 2) : 0;
+            $item->achievement = !empty($item->achievement) ? round($item->achievement, 2) : 0;
+            $item->URUTAN = !empty($item->URUTAN) ? (int) $item->URUTAN : 0;
+
+            // Format 'mtd_date' dan 'last_update' jika ada
+            $item->mtd_date = !empty($item->mtd_date) ? Carbon::parse($item->mtd_date)->format('d-m-Y') : '00-00-0000';
+            $item->last_update = !empty($item->last_update) ? Carbon::parse($item->last_update)->format('d-m-Y') : '00-00-0000';
+
+            return $item;
+        });
+
+        return $profileData;
     }
 
-    public function sliders($request)
+        public function sliders($request)
     {
         $params = $request->status;
 
@@ -222,10 +240,12 @@ class DashboardService
     }
 
 
-    public function account()
+    public function account(Request $request)
     {
         $username = auth('api')->user()->username;
         $roleLabel = auth('api')->user()->role_label;
+
+        $branch = $request->get('branch');
 
         // Ambil data dari database pertama
         $profile = DB::connection('pgsql')->table('mitra_table')
@@ -251,12 +271,18 @@ class DashboardService
         // Ambil data dari database kedua
         $site = DB::connection('pgsql2')->table('ELANG_MTD_PARTNER')
             ->where('PARTNER_NAME', $filter)
-            ->where('STATUS', 'VALID')
-            ->select(
-                DB::raw('"ADD SITE" as site_count'), // Fix for string literal
-                DB::raw('"QR_CODE" as outlet_count') // Fix for column aliasing
-            )
-            ->first();
+            ->where('STATUS', 'VALID');
+
+        // Tambahkan kondisi jika rolelabel adalah MPC atau MP3
+        if ($roleLabel === 'MPC' || $roleLabel === 'MP3') {
+            $site->where('BSM', $branch);
+        }
+
+        $site = $site->select(
+            DB::raw('"ADD SITE" as site_count'),  // String literal tetap
+            DB::raw('"QR_CODE" as outlet_count') // String literal tetap
+        )->first();
+
 
 
         if (!$site) {

@@ -17,10 +17,6 @@ class OutletService
             throw new \Exception('Partner Name is required', 400);
         }
 
-        if (!$mc_id || $mc_id == ":mc_id") {
-            throw new \Exception('MC is required', 400);
-        }
-
         if (!$kecamatan || $kecamatan == ":kecamatan") {
             throw new \Exception('Kecamatan is required', 400);
         }
@@ -66,19 +62,20 @@ class OutletService
 
 
 
-public function listKecamatanByMc()
+public function listKecamatanByMc(Request $request)
     {
         $brand = auth('api')->user()->brand;
         $mc_id = auth('api')->user()->territory_id;
+        $role = auth('api')->user()->role;
         $username = auth('api')->user()->username;
 
-        if (!$brand) {
-            throw new \Exception('Brand is required', 400);
-        }
+        $branch = $request->get('branch');
 
-        if ($brand != '3ID' && $brand != 'IM3') {
-            throw new \Exception('Invalid Brand', 400);
-        }
+        $pt_name = DB::table('mitra_table')
+            ->select('nama_mitra')
+            ->where('id_mitra', $username)
+            ->first()
+            ->nama_mitra;
 
         $mc_data = DB::table('territories')
             ->select("id", "id_secondary", "name")
@@ -109,13 +106,17 @@ public function listKecamatanByMc()
         $data = DB::connection('pgsql2')
             ->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
             ->selectRaw('DISTINCT "KEC_BRANCHH", "NAMA_PT"')
-            ->where('MC', $mc_name)
-            ->where("PARTNER_ID", $username)
-            ->whereNotNull("NAMA_PT")
-           ->get();
-//            ->toRawSql();
+            ->where("NAMA_PT", $pt_name)
+            ->whereNotNull("NAMA_PT");
 
-        return $data;
+        if ($role == 7) {
+            $data->where('BSM', $branch);
+        }
+        else if ($role == 6) {
+            $data->where('MC', $mc_name);
+        }
+
+        return $data->get();
     }
 
 
