@@ -31,8 +31,6 @@ class OutletService
             throw new \Exception('MC not found', 404);
         }
 
-        $mc_name = Str::substr($mc->name, 0, -4);
-        $mc_name = Str::upper($mc_name);
         $mc_brand = Str::substr($mc->name, -3);
 
         if ($mc_brand != $mc->brand) {
@@ -44,13 +42,12 @@ class OutletService
             ->selectRaw(
                 '"QR_CODE" as qr_code,
                 "NAMA_TOKO" as outlet_name,
-                "NAMA_PT" as partner_name,
+                "PARTNER_NAME" as partner_name,
                 "CATEGORY" as category,
                 brand,
                 "STATUS" as status'
             )
-            ->whereRaw('UPPER("NAMA_PT") = ?', [Str::upper($partner_name)])
-            ->where('MC', $mc_name)
+            ->whereRaw('UPPER("PARTNER_NAME") = ?', [Str::upper($partner_name)])
             ->where('brand', $mc_brand)
             ->where('STATUS', 'VALID')
             ->whereNotNull('CATEGORY')
@@ -105,9 +102,10 @@ public function listKecamatanByMc(Request $request)
         // To Do : To CONNECT TO SERVER
         $data = DB::connection('pgsql2')
             ->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
-            ->selectRaw('DISTINCT "KEC_BRANCHH", "NAMA_PT"')
-            ->where("NAMA_PT", $pt_name)
-            ->whereNotNull("NAMA_PT");
+            ->selectRaw('DISTINCT "KEC_BRANCHH", "PARTNER_NAME"')
+            ->where("PARTNER_NAME", $pt_name)
+            ->whereNotNull("PARTNER_NAME");
+//            ->whereNotNull("CATEGORY");
 
         if ($role == 7) {
             $data->where('BSM', $branch);
@@ -151,12 +149,12 @@ public function listKecamatanByMc(Request $request)
         $data = DB::connection('pgsql2')
             ->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
             ->selectRaw(
-                'DISTINCT "NAMA_PT" as partner_name'
+                'DISTINCT "PARTNER_NAME" as partner_name'
             )
             ->where('MC', $mc_name)
             ->where('brand', $mc_brand)
             ->where('STATUS', 'VALID')
-            ->whereNotNull('NAMA_PT')
+            ->whereNotNull('PARTNER_NAME')
             ->get();
 
         return collect($data)->transform(function ($item) use ($mc_id, $mc_brand) {
@@ -182,7 +180,7 @@ public function listKecamatanByMc(Request $request)
                 '"QR_CODE" as qr_code,
                 site_id,
                 "NAMA_TOKO" as outlet_name,
-                "NAMA_PT" as partner_name,
+                "PARTNER_NAME" as partner_name,
                 "CATEGORY" as category,
                 brand,
                 latitude,

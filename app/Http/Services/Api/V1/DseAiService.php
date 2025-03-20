@@ -347,12 +347,12 @@ class DseAiService
     {
         $username = auth()->user()->username;
         $mcId = auth()->user()->territory_id;
-        if ($mcId == 0 || $mcId == null) {
-            throw new \Exception('MC ID is required', 400);
-        }
 
-        $month = $request->month;
-        $year = $request->year;
+        $branch = $request->get('branch');
+        $month = $request->get('month');
+        $year = $request->get('year');
+
+        $role = auth()->user()->role;
 
         if ($month == null || $year == null) {
             throw new \Exception('Month and year are required', 400);
@@ -362,9 +362,28 @@ class DseAiService
             ->where('id', $mcId)
             ->value('name');
 
+        if ($role == 6)
+        {
+            $getFilter = 'MC';
+            $valueFilter = $mcName;
+            $userfilterValue = $username;
+            $userfilter = 'PARTNER_ID';
+        }
+        else if ($role == 7)
+        {
+            $getFilter = 'BSM';
+            $valueFilter = $branch;
+            $userfilter = 'PARTNER_NAME';
+            $userfilterValue = DB::table('mitra_table')
+                ->select('nama_mitra')
+                ->where('id_mitra', $username)
+                ->first()
+                ->nama_mitra;
+        }
+
         $distinctDse = DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
-            ->where('PARTNER_ID', $username)
-            ->where('MC', $mcName)
+            ->where($userfilter, $userfilterValue)
+            ->where($getFilter, $valueFilter)
             ->distinct()
             ->pluck('DSE_CODE')
             ->toArray();
@@ -450,7 +469,9 @@ class DseAiService
     {
         $username = auth()->user()->username;
         $mcId = auth()->user()->territory_id;
-        $date = $request->date;
+        $date = $request->get('date');
+        $branch = $request->get('branch');
+        $role = auth()->user()->role;
 
         if ($date == null) {
             throw new \Exception('Date is required', 400);
@@ -460,9 +481,28 @@ class DseAiService
             ->where('id', $mcId)
             ->value('name');
 
+        if ($role == 6)
+        {
+            $getFilter = 'MC';
+            $valueFilter = $mcName;
+            $userfilterValue = $username;
+            $userfilter = 'PARTNER_ID';
+        }
+        else if ($role == 7)
+        {
+            $getFilter = 'BSM';
+            $valueFilter = $branch;
+            $userfilter = 'PARTNER_NAME';
+            $userfilterValue = DB::table('mitra_table')
+                ->select('nama_mitra')
+                ->where('id_mitra', $username)
+                ->first()
+                ->nama_mitra;
+        }
+
         $distinctDse = DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
-            ->where('PARTNER_ID', $username)
-            ->where('MC', $mcName)
+            ->where($userfilter, $userfilterValue)
+            ->where($getFilter, $valueFilter)
             ->distinct()
             ->pluck('DSE_CODE')
             ->toArray();
