@@ -518,7 +518,7 @@ class DseAiService
             }
 
             if ($d->target_pjp != 0) {
-                $d->percentage_pjp = number_format(($d->actual_pjp / $d->target_pjp) * 100, 2) . '%';
+                $d->percentage_pjp = number_format(($d->actual_unique_pjp / $d->target_pjp) * 100, 2) . '%';
             }
         }
 
