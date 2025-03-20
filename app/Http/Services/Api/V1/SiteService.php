@@ -7,34 +7,13 @@ use Illuminate\Support\Str;
 
 class SiteService
 {
-    public function listKecamatanByMc()
+    public function listKecamatanByMc($request)
     {
         $mc_id = auth('api')->user()->territory_id;
         $brand = auth('api')->user()->brand;
         $roleLabel = auth('api')->user()->role_label;
         $username = auth('api')->user()->username;
-
-        if ($roleLabel == 'MPC' || $roleLabel == 'MP3') {
-            $filter_pt = DB::connection('pgsql')->table('mitra_table')
-                ->select('id_mitra', 'nama_mitra')
-                ->where('is_active', true)
-                ->where('id_mitra', $username)
-                ->first()->nama_mitra; // Ambil satu baris data
-            $filter_pt = substr($filter_pt, 0, -4) . '_ PT';
-        }
-        else if ($roleLabel === 'MITRAIM3' || '3KIOSK') {
-            $filter_pt = $username;
-        }
-
-
-
-        if (!$brand) {
-            throw new \Exception('Brand is required', 400);
-        }
-
-        if ($brand != '3ID' && $brand != 'IM3') {
-            throw new \Exception('Invalid Brand', 400);
-        }
+        $branch = $request->get('branch');
 
         $mc_data = DB::table('territories')
             ->select("id", "id_secondary", "name")
@@ -67,6 +46,22 @@ class SiteService
             $pt_column = "NAMA_PTIM3";
         }
 
+        if ($roleLabel == 'MPC' || $roleLabel == 'MP3') {
+            $filter_pt = DB::connection('pgsql')->table('mitra_table')
+                ->select('id_mitra', 'nama_mitra')
+                ->where('is_active', true)
+                ->where('id_mitra', $username)
+                ->first()->nama_mitra; // Ambil satu baris data
+            $filter_pt = substr($filter_pt, 0, -4) . '_ PT';
+            $areaFilter = 'BSM';
+            $areaValue = $branch;
+        }
+        else if ($roleLabel === 'MITRAIM3' || '3KIOSK') {
+            $filter_pt = $username;
+            $areaFilter = 'MC';
+            $areaValue = $mc_name;
+        }
+
         // To Do : To CONNECT TO SERVER
         $data = DB::connection('pgsql2')
             ->table('PREP_RAPI_IMPALA_SITE_BULAN_INI')
@@ -76,7 +71,7 @@ class SiteService
             "LRK" AS lrk
             ')
             ->where($pt_column, $filter_pt)
-            ->where('MC', $mc_name)
+            ->where($areaFilter, $areaValue)
             ->get();
 
         return $data;

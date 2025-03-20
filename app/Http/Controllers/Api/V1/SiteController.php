@@ -14,10 +14,10 @@ class SiteController extends Controller
         $this->service = $service;
     }
 
-    public function listKecamatanByMc()
+    public function listKecamatanByMc(Request $request)
     {
         try {
-            $data = $this->service->listKecamatanByMc();
+            $data = $this->service->listKecamatanByMc($request);
             $result = [
                 'data' => $data->transform(function ($data) {
                     return [

@@ -352,6 +352,10 @@ class DseAiService
         $month = $request->get('month');
         $year = $request->get('year');
 
+        $branchId = DB::table('territory_dashboards')
+            ->where('name', $branch)
+            ->value('id');
+
         $role = auth()->user()->role;
 
         if ($month == null || $year == null) {
@@ -368,6 +372,9 @@ class DseAiService
             $valueFilter = $mcName;
             $userfilterValue = $username;
             $userfilter = 'PARTNER_ID';
+
+            $dseFilter = 't.id';
+            $dseValue = $mcId;
         }
         else if ($role == 7)
         {
@@ -379,6 +386,9 @@ class DseAiService
                 ->where('id_mitra', $username)
                 ->first()
                 ->nama_mitra;
+
+            $dseFilter = 't2.id';
+            $dseValue = $branchId;
         }
 
         $distinctDse = DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
@@ -388,10 +398,13 @@ class DseAiService
             ->pluck('DSE_CODE')
             ->toArray();
 
+//        dd($dseFilter);
+
         $dse = DB::table('dse as d')
             ->select('d.id_dse as dse_id', 'd.name as dse_name', 'd.id_unit', 'd.status', 't.name as territory_name', 't.id as territory_id')
             ->join('territories as t', 'd.id_unit', '=', 't.id')
-            ->where('t.id', $mcId)
+            ->join('territories as t2', 't.id_secondary', '=', 't2.id')
+            ->where($dseFilter, $dseValue)
             ->whereIn('d.id_dse', $distinctDse)
             ->where('t.is_active', 1)
             ->get();
@@ -477,6 +490,10 @@ class DseAiService
             throw new \Exception('Date is required', 400);
         }
 
+        $branchId = DB::table('territory_dashboards')
+            ->where('name', $branch)
+            ->value('id');
+
         $mcName = DB::table('territory_dashboards')
             ->where('id', $mcId)
             ->value('name');
@@ -487,6 +504,9 @@ class DseAiService
             $valueFilter = $mcName;
             $userfilterValue = $username;
             $userfilter = 'PARTNER_ID';
+
+            $dseFilter = 't.id';
+            $dseValue = $mcId;
         }
         else if ($role == 7)
         {
@@ -498,6 +518,9 @@ class DseAiService
                 ->where('id_mitra', $username)
                 ->first()
                 ->nama_mitra;
+
+            $dseFilter = 't2.id';
+            $dseValue = $branchId;
         }
 
         $distinctDse = DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
@@ -510,8 +533,9 @@ class DseAiService
         $dse = DB::table('dse as d')
             ->select('d.id_dse as dse_id', 'd.name as dse_name', 'd.id_unit', 'd.status', 't.name as territory_name', 't.id as territory_id')
             ->join('territories as t', 'd.id_unit', '=', 't.id')
+            ->join('territories as t2', 't.id_secondary', '=', 't2.id')
             ->whereIn('d.id_dse', $distinctDse)
-            ->where('t.id', $mcId)
+            ->where($dseFilter, $dseValue)
             ->where('t.is_active', 1)
             ->get();
 
