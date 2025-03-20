@@ -484,6 +484,7 @@ class DseAiService
             $d->target_pjp = "0";
             $d->actual_pjp = "0";
             $d->actual_unique_pjp = "0";
+            $d->percentage_pjp = "0";
 
             foreach ($dse_ai_summary as $das) {
                 if ($d->dse_id == $das->username) {
@@ -515,6 +516,10 @@ class DseAiService
                     $d->actual_unique_pjp = $this->format_number($actualPjp['actual_pjp']);
                 }
             }
+
+            if ($d->target_pjp != 0) {
+                $d->percentage_pjp = number_format(($d->actual_pjp / $d->target_pjp) * 100, 2) . '%';
+            }
         }
 
         // Show only the selected data
@@ -536,6 +541,7 @@ class DseAiService
                 'target_pjp' => $item->target_pjp,
                 'actual_pjp' => $item->actual_pjp,
                 'actual_unique_pjp' => $item->actual_unique_pjp,
+                'percentage_pjp' => $item->percentage_pjp
             ];
         });
 
