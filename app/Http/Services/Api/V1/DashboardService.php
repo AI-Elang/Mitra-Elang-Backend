@@ -275,15 +275,23 @@ class DashboardService
         $ptName = DB::table('mitra_table')
             ->select('nama_mitra')
             ->where('id_mitra', $username)
-            ->first();
+            ->first()
+            ->nama_mitra;
 
-        // Pakai pluck untuk ambil array value dari kolom branch
         $branches = DB::table('mitra_table')
-            ->where('nama_mitra', $ptName->nama_mitra)
+            ->where('nama_mitra', $ptName)
+            ->select('branch', 'id_mitra')
             ->distinct()
-            ->pluck('branch'); // Ini auto jadi array
+            ->get();
 
-        return $branches;
+        // Prioritaskan branch dengan id_mitra = $username
+        $sorted = $branches->sortBy(function($item) use ($username) {
+            return $item->id_mitra === $username ? 0 : 1;
+        })->pluck('branch')->unique()->values();
+
+
+
+        return $sorted;
     }
 
 }
