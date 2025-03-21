@@ -5,6 +5,7 @@ namespace App\Http\Services\Api\V1;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use function Symfony\Component\String\b;
 
 class DashboardService
 {
@@ -26,7 +27,7 @@ class DashboardService
     public function dashboard(Request $request)
     {
         $mcId = auth('api')->user()->territory_id;
-        $useRole = auth('api')->user()->role_label;
+        $userRole = auth('api')->user()->role_label;
         $role = auth('api')->user()->role;
         $username = auth('api')->user()->username;
         $branch = $request->get('branch');
@@ -41,6 +42,8 @@ class DashboardService
                 ->first()
                 ->nama_mitra;
         }
+
+//        dd($usernameFilter);
         $regionId = $this->getRegionId($mcId);
 
         $parameters = DB::table('parameter_mitra as p')
@@ -61,7 +64,7 @@ class DashboardService
             ->where('sp.is_active', true)
             ->where('p.is_active', true)
             ->where('rp.territory_id', $regionId)
-            ->where('rp.type', $useRole)
+            ->where('rp.type', $userRole)
             ->get();
 
         $data = [];
@@ -248,6 +251,21 @@ class DashboardService
 
         $branch = $request->get('branch');
 
+        if ($roleLabel === 'MPC' || $roleLabel === '3KIOSK' || $roleLabel === 'MITRAIM3') {
+            $ptfilter = 'PARTNER_NAME';
+        } else if ($roleLabel === 'MP3') {
+            $ptfilter = 'NAMA_PT'; // atau 'nama_pt' sesuai hasil cek database
+        } else {
+            $ptfilter = 'PARTNER_NAME';
+        }
+
+        $nama_pt = DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+            ->select(DB::raw("\"$ptfilter\" AS nama_mitra"))
+            ->where('PARTNER_ID', $username)
+            ->first();
+
+
+
         $mc_name = DB::table('territory_dashboards')
             ->select('name')
             ->where('id', $mc)
@@ -258,11 +276,12 @@ class DashboardService
         $profile = DB::connection('pgsql')->table('mitra_table')
             ->select('id_mitra',
                 'nama_mitra',
-                'type',
-                DB::raw('CAST(0 AS INTEGER) as site_count'))
+                'type')
             ->where('is_active', true)
             ->where('id_mitra', $username)
             ->first(); // Ambil satu baris data
+
+
 
         if (!$profile) {
             return 'Profile data not found';
@@ -298,35 +317,54 @@ class DashboardService
             $site->where('MC', $mc_name);
         }
 
-        $site = $site->select(
+        $siteList = $site->select(
             DB::raw('COALESCE("ADD SITE", 0) as site_count'),
             DB::raw('COALESCE("QR_CODE", 0) as outlet_count')
-//        )->toRawSql();
-        )->first() ?? (object)['site_count' => "0", 'outlet_count' => "0"];
+        )->get();
 
-//        dd($site);
+        $maxData = $siteList->sortByDesc(function($item) {
+            return max($item->site_count, $item->outlet_count);
+        })->first();
 
+        $maxData = $maxData ?? (object)['site_count' => "0", 'outlet_count' => "0"];
 
         // Gabungkan data dari dua database
-        $mergedData = array_merge((array) $profile, (array) $site);
+        $profileArray = (array) $profile;
+        unset($profileArray['nama_mitra']); // buang nama_mitra dari profile
+
+        $mergedData = array_merge((array) $nama_pt, $profileArray, (array) $maxData);
 
         return $mergedData;
     }
 
     public function dropdown()
     {
+        $role_label = auth('api')->user()->role_label;
         $username = auth('api')->user()->username;
-        $ptName = DB::table('mitra_table')
-            ->select('nama_mitra')
-            ->where('id_mitra', $username)
-            ->first()
-            ->nama_mitra;
+
+        if ($role_label == "MPC" || $role_label == "3KIOSK" || $role_label == "MITRAIM3") {
+            $ptName = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+                ->select('PARTNER_NAME')
+                ->where('PARTNER_ID', $username)
+                ->first())->PARTNER_NAME;
+        } else if ($role_label == "MP3") {
+            $ptName = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+                ->select('NAMA_PT')
+                ->where('PARTNER_ID', $username)
+                ->first())->NAMA_PT;
+        }
+
+//        dd($ptName);
 
         $branches = DB::table('mitra_table')
-            ->where('nama_mitra', $ptName)
+            ->where('nama_mitra', 'like', '%' . $ptName . '%')
             ->select('branch', 'id_mitra')
             ->distinct()
             ->get();
+
+
+//        dd($branches);
+
 
         // Prioritaskan branch dengan id_mitra = $username
         $sorted = $branches->sortBy(function($item) use ($username) {
