@@ -268,7 +268,7 @@ class DashboardService
             return 'Profile data not found';
         }
 
-        if ($roleLabel === 'MPC' || $roleLabel === 'MP3') {
+        if ($roleLabel === 'MPC' || $roleLabel === 'MP3' || $roleLabel === '3KIOSK)') {
             if (substr($profile->nama_mitra, -4) === ' PT ') {
                 $filter = substr($profile->nama_mitra, 0, -4) . ', PT';
             } else {
@@ -276,9 +276,14 @@ class DashboardService
             }
 
 
-        } else if ($roleLabel === 'MITRAIM3' || '3KIOSK') {
+        } else if ($roleLabel === 'MITRAIM3') {
                 $filter = $username;
+        }else {
+            // Optional: decide what the default filter should be
+            $filter = $profile->nama_mitra; // or handle error
         }
+
+
 
         // Ambil data dari database kedua
         $site = DB::connection('pgsql2')->table('ELANG_MTD_PARTNER')
@@ -299,7 +304,7 @@ class DashboardService
 //        )->toRawSql();
         )->first() ?? (object)['site_count' => "0", 'outlet_count' => "0"];
 
-//        dd($site->outlet_count);
+//        dd($site);
 
 
         // Gabungkan data dari dua database
