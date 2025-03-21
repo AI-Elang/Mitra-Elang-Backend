@@ -47,12 +47,18 @@ class AuthService
                 throw new Exception('Akun tidak aktif', 403);
             }
 
-            if ($user->role == 6) {
+            if ($user->role_label == 'MITRAIM3') {
                 $filtervalue = 'MC';
                 $nama_mitra = $request->username;
             }
-            else if ($user->role == 7) {
-                $filtervalue = 'BSM';
+            else {
+                if ($user->role_label == '3KIOSK')
+                {
+                    $filtervalue = 'MC';
+                }
+                else{
+                    $filtervalue = 'BSM';
+                }
                 $nama_mitra = DB::connection('pgsql')->table('mitra_table')
                     ->select('id_mitra',
                         'nama_mitra')
@@ -67,7 +73,10 @@ class AuthService
                 ->where('PARTNER_NAME', $nama_mitra)
                 ->where('STATUS', 'VALID')
                 ->whereNotNull($filtervalue)
+//                ->toRawSql();
                 ->first();
+
+//            dd($isnotnull);
 
             if(!$isnotnull)
             {
