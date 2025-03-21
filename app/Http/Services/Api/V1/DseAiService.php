@@ -368,10 +368,10 @@ class DseAiService
 
         if ($role == 6)
         {
-//            $getFilter = 'MC';
-//            $valueFilter = $mcName;
-//            $userfilterValue = $username;
-//            $userfilter = 'PARTNER_ID';
+            $getFilter = 'MC';
+            $valueFilter = $mcName;
+            $userfilterValue = $username;
+            $userfilter = 'PARTNER_ID';
 
             $dseFilter = 't.id';
             $dseValue = $mcId;

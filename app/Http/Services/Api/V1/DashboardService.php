@@ -87,7 +87,7 @@ class DashboardService
                     'value' => isset($parameterValue->{$param->parameter_column})
                         ? (is_numeric($parameterValue->{$param->parameter_column})
                             ? (is_float($floatValue = (float) $parameterValue->{$param->parameter_column})
-                                ? round($floatValue, 2)
+                                ? round($floatValue, 1)
                                 : $parameterValue->{$param->parameter_column})
                             : $parameterValue->{$param->parameter_column})
                         : 0.0,
@@ -115,7 +115,7 @@ class DashboardService
                     'value' => isset($subparamValue->{$param->subparameter_column})
                         ? (is_numeric($subparamValue->{$param->subparameter_column})
                             ? (is_float($floatValue = (float) $subparamValue->{$param->subparameter_column})
-                                ? round($floatValue, 2)
+                                ? round($floatValue, 1)
                                 : $subparamValue->{$param->subparameter_column})
                             : $subparamValue->{$param->subparameter_column})
                         : 0.0,
@@ -147,7 +147,7 @@ class DashboardService
                     if (ctype_digit($item->nilai)) {
                         $item->nilai = (int) $item->nilai; // Convert to integer
                     } else {
-                        $item->nilai = round($item->nilai,2);// Convert to float
+                        $item->nilai = round($item->nilai,1);// Convert to float
                     }
                 }
                 if (!empty($item->last_update)) {
@@ -279,15 +279,12 @@ class DashboardService
         }
 
         $site = $site->select(
-            DB::raw('"ADD SITE" as site_count'),  // String literal tetap
-            DB::raw('"QR_CODE" as outlet_count') // String literal tetap
-        )->first();
+            DB::raw('COALESCE("ADD SITE", 0) as site_count'),
+            DB::raw('COALESCE("QR_CODE", 0) as outlet_count')
+        )->first() ?? (object)['site_count' => 0, 'outlet_count' => 0];
 
+//        dd($site->outlet_count);
 
-
-        if (!$site) {
-            return 'Site data not found';
-        }
 
         // Gabungkan data dari dua database
         $mergedData = array_merge((array) $profile, (array) $site);
