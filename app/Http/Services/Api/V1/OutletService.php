@@ -42,12 +42,12 @@ class OutletService
             ->selectRaw(
                 '"QR_CODE" as qr_code,
                 "NAMA_TOKO" as outlet_name,
-                "PARTNER_NAME" as partner_name,
+                "NAMA_PT" as partner_name,
                 "CATEGORY" as category,
                 brand,
                 "STATUS" as status'
             )
-            ->whereRaw('UPPER("PARTNER_NAME") = ?', [Str::upper($partner_name)])
+            ->whereRaw('UPPER("NAMA_PT") = ?', [Str::upper($partner_name)])
             ->where('brand', $mc_brand)
             ->where('STATUS', 'VALID')
             ->whereNotNull('CATEGORY')
@@ -73,6 +73,8 @@ public function listKecamatanByMc(Request $request)
             ->where('id_mitra', $username)
             ->first()
             ->nama_mitra;
+
+//        dd($pt_name);
 
         $mc_data = DB::table('territories')
             ->select("id", "id_secondary", "name")
@@ -102,9 +104,9 @@ public function listKecamatanByMc(Request $request)
         // To Do : To CONNECT TO SERVER
         $data = DB::connection('pgsql2')
             ->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
-            ->selectRaw('DISTINCT "KEC_BRANCHH", "PARTNER_NAME"')
-            ->where("PARTNER_NAME", $pt_name)
-            ->whereNotNull("PARTNER_NAME");
+            ->selectRaw('DISTINCT "KEC_BRANCHH", "NAMA_PT"')
+            ->where("NAMA_PT", $pt_name)
+            ->whereNotNull("NAMA_PT");
 //            ->whereNotNull("CATEGORY");
 
         if ($role == 7) {
@@ -113,7 +115,7 @@ public function listKecamatanByMc(Request $request)
         else if ($role == 6) {
             $data->where('MC', $mc_name);
         }
-//        dd($data->toRawSql());
+        dd($data->toRawSql());
 
         return $data->get();
     }
@@ -150,12 +152,12 @@ public function listKecamatanByMc(Request $request)
         $data = DB::connection('pgsql2')
             ->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
             ->selectRaw(
-                'DISTINCT "PARTNER_NAME" as partner_name'
+                'DISTINCT "NAMA_PT" as partner_name'
             )
             ->where('MC', $mc_name)
             ->where('brand', $mc_brand)
             ->where('STATUS', 'VALID')
-            ->whereNotNull('PARTNER_NAME')
+            ->whereNotNull('NAMA_PT')
             ->get();
 
         return collect($data)->transform(function ($item) use ($mc_id, $mc_brand) {

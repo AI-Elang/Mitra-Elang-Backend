@@ -347,6 +347,7 @@ class DseAiService
     {
         $username = auth()->user()->username;
         $mcId = auth()->user()->territory_id;
+        $brand = auth()->user()->brand;
 
         $branch = $request->get('branch');
         $month = $request->get('month');
@@ -362,14 +363,20 @@ class DseAiService
             throw new \Exception('Month and year are required', 400);
         }
 
-        $mcName = DB::table('territory_dashboards')
+        $mc_no_brand = DB::table('territory_dashboards')
             ->where('id', $mcId)
             ->value('name');
 
+        $mcName = $mc_no_brand . ' ' . $brand;
+
         if ($role == 6)
         {
+            $mcId = DB::table('territories')
+                ->where('name', $mcName)
+                ->value('id');
+
             $getFilter = 'MC';
-            $valueFilter = $mcName;
+            $valueFilter = $mc_no_brand;
             $userfilterValue = $username;
             $userfilter = 'PARTNER_ID';
 
@@ -399,6 +406,8 @@ class DseAiService
             ->pluck('DSE_CODE')
             ->toArray();
 
+//        dd($getFilter, $valueFilter);
+
         $dse = DB::table('dse as d')
             ->select('d.id_dse as dse_id', 'd.name as dse_name', 'd.id_unit', 'd.status', 't.name as territory_name', 't.id as territory_id')
             ->join('territories as t', 'd.id_unit', '=', 't.id')
@@ -406,7 +415,11 @@ class DseAiService
             ->where($dseFilter, $dseValue)
             ->whereIn('d.id_dse', $distinctDse)
             ->where('t.is_active', 1)
-            ->get();
+            ->where('d.status', 1)
+            ->get()
+        ;
+
+//        dd($dse);
 
         $dseIds = $dse->pluck('dse_id')->toArray();
 
@@ -555,6 +568,7 @@ class DseAiService
         $date = $request->get('date');
         $branch = $request->get('branch');
         $role = auth()->user()->role;
+        $brand = auth()->user()->brand;
 
         if ($date == null) {
             throw new \Exception('Date is required', 400);
@@ -564,14 +578,26 @@ class DseAiService
             ->where('name', $branch)
             ->value('id');
 
-        $mcName = DB::table('territory_dashboards')
+        $mc_no_brand = DB::table('territory_dashboards')
             ->where('id', $mcId)
             ->value('name');
 
+        $mc_no_brand = DB::table('territory_dashboards')
+            ->where('id', $mcId)
+            ->value('name');
+
+        $mcName = $mc_no_brand . ' ' . $brand;
+
+
+
         if ($role == 6)
         {
+            $mcId = DB::table('territories')
+                ->where('name', $mcName)
+                ->value('id');
+
             $getFilter = 'MC';
-            $valueFilter = $mcName;
+            $valueFilter = $mc_no_brand;
             $userfilterValue = $username;
             $userfilter = 'PARTNER_ID';
 
