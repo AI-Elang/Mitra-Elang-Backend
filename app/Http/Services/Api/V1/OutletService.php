@@ -113,6 +113,7 @@ public function listKecamatanByMc(Request $request)
         else if ($role == 6) {
             $data->where('MC', $mc_name);
         }
+        dd($data->toRawSql());
 
         return $data->get();
     }

@@ -345,7 +345,7 @@ class SiteService
         }
 
         $data = DB::connection('pgsql2')
-            ->table('IOH_OUTLET_BULAN_INI_RAPI')
+            ->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
             ->select(
                 'QR_CODE as qr_code',
                 'NAMA_TOKO as outlet_name',

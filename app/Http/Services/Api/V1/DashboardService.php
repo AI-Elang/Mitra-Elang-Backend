@@ -244,8 +244,15 @@ class DashboardService
     {
         $username = auth('api')->user()->username;
         $roleLabel = auth('api')->user()->role_label;
+        $mc = auth('api')->user()->territory_id;
 
         $branch = $request->get('branch');
+
+        $mc_name = DB::table('territory_dashboards')
+            ->select('name')
+            ->where('id', $mc)
+            ->first()
+            ->name;
 
         // Ambil data dari database pertama
         $profile = DB::connection('pgsql')->table('mitra_table')
@@ -262,7 +269,12 @@ class DashboardService
         }
 
         if ($roleLabel === 'MPC' || $roleLabel === 'MP3') {
-            $filter = substr($profile->nama_mitra, 0, -4) . ', PT';
+            if (substr($profile->nama_mitra, -4) === ' PT ') {
+                $filter = substr($profile->nama_mitra, 0, -4) . ', PT';
+            } else {
+                $filter = $profile->nama_mitra;
+            }
+
 
         } else if ($roleLabel === 'MITRAIM3' || '3KIOSK') {
                 $filter = $username;
@@ -273,15 +285,19 @@ class DashboardService
             ->where('PARTNER_NAME', $filter)
             ->where('STATUS', 'VALID');
 
-        // Tambahkan kondisi jika rolelabel adalah MPC atau MP3
+//         Tambahkan kondisi jika rolelabel adalah MPC atau MP3
         if ($roleLabel === 'MPC' || $roleLabel === 'MP3') {
             $site->where('BSM', $branch);
+        }
+        else if ($roleLabel === 'MITRAIM3' || '3KIOSK') {
+            $site->where('MC', $mc_name);
         }
 
         $site = $site->select(
             DB::raw('COALESCE("ADD SITE", 0) as site_count'),
             DB::raw('COALESCE("QR_CODE", 0) as outlet_count')
-        )->first() ?? (object)['site_count' => 0, 'outlet_count' => 0];
+//        )->toRawSql();
+        )->first() ?? (object)['site_count' => "0", 'outlet_count' => "0"];
 
 //        dd($site->outlet_count);
 
