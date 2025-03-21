@@ -49,25 +49,27 @@ class AuthService
 
             if ($user->role == 6) {
                 $filtervalue = 'MC';
+                $nama_mitra = $request->username;
             }
             else if ($user->role == 7) {
                 $filtervalue = 'BSM';
+                $nama_mitra = DB::connection('pgsql')->table('mitra_table')
+                    ->select('id_mitra',
+                        'nama_mitra')
+                    ->where('is_active', true)
+                    ->where('id_mitra', $request->username)
+                    ->first()
+                    ->nama_mitra; // Ambil satu baris data
             }
 
-            $nama_mitra = DB::connection('pgsql')->table('mitra_table')
-                ->select('id_mitra',
-                    'nama_mitra')
-                ->where('is_active', true)
-                ->where('id_mitra', $request->username)
-                ->first()
-                ->nama_mitra; // Ambil satu baris data
-
             $isnotnull =  DB::connection('pgsql2')->table('ELANG_MTD_PARTNER')
+                ->select('PARTNER_NAME', $filtervalue)
                 ->where('PARTNER_NAME', $nama_mitra)
                 ->where('STATUS', 'VALID')
-                ->whereNotNull($filtervalue);
+                ->whereNotNull($filtervalue)
+                ->first();
 
-            if($isnotnull)
+            if(!$isnotnull)
             {
                 throw new Exception('Anda tidak memiliki akses', 401);
             }
