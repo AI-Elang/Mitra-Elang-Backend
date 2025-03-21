@@ -705,7 +705,8 @@ class DseAiService
             $d->zero = isset($zeroCounts[$username]) ? $zeroCounts[$username]->zero : 0;
 
             // Get target PJP
-            $d->target_pjp = isset($targetPjps[$username]) && $targetPjps[$username]->target_pjp != 0 ? ceil($targetPjps[$username]->target_pjp / 24) : 0;
+//            $d->target_pjp = isset($targetPjps[$username]) && $targetPjps[$username]->target_pjp != 0 ? ceil($targetPjps[$username]->target_pjp / 24) : 0;
+            $d->target_pjp = 15;
 
             // Get actual PJP
             $d->actual_pjp = isset($actualPjps[$username]) ? $actualPjps[$username]['actual_pjp'] : 0;
