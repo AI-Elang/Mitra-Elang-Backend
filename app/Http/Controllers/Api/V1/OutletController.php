@@ -49,7 +49,7 @@ public function listKecamatanByMc(Request $request)
                 'data' => $data->transform(function ($data) {
                     return [
                         'kecamatan' => $data->KEC_BRANCHH,
-                        'pt_name' => $data->PARTNER_NAME
+                        'pt_name' => $data->NAMA_PT
                     ];
                 }),
                 'meta' => [
