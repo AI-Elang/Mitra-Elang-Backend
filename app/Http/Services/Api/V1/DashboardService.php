@@ -282,7 +282,9 @@ class DashboardService
         $nama_pt = DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
             ->select(DB::raw("\"$ptfilter\" AS nama_mitra"))
             ->where('PARTNER_ID', $username)
-            ->first();
+            ->first()
+//            ->$ptfilter
+        ;
 
 
 
@@ -307,27 +309,27 @@ class DashboardService
             return 'Profile data not found';
         }
 
-        if ($roleLabel === 'MPC' || $roleLabel === 'MP3' || $roleLabel === '3KIOSK)') {
+//        if ($roleLabel === 'MPC' || $roleLabel === 'MP3' || $roleLabel === '3KIOSK)') {
 //            if (substr($profile->nama_mitra, -4) === ' PT ') {
 //                $filter = substr($profile->nama_mitra, 0, -4) . ', PT';
 //            } else {
 //                $filter = $profile->nama_mitra;
 //            }
-            $filter = $profile->nama_mitra;
-
-
-        } else if ($roleLabel === 'MITRAIM3') {
-                $filter = $username;
-        }else {
-            // Optional: decide what the default filter should be
-            $filter = $profile->nama_mitra; // or handle error
-        }
+//            $filter = $profile->nama_mitra;
+//
+//
+//        } else if ($roleLabel === 'MITRAIM3') {
+//                $filter = $username;
+//        }else {
+//            // Optional: decide what the default filter should be
+//            $filter = $profile->nama_mitra; // or handle error
+//        }
 
 
 
         // Ambil data dari database kedua
         $site = DB::connection('pgsql2')->table('ELANG_MTD_PARTNER')
-            ->where('PARTNER_NAME', $filter)
+            ->where('PARTNER_NAME', 'like', '%' . $nama_pt->nama_mitra . '%' )
             ->where('STATUS', 'VALID');
 
 //         Tambahkan kondisi jika rolelabel adalah MPC atau MP3
@@ -337,6 +339,8 @@ class DashboardService
         else if ($roleLabel === 'MITRAIM3' || '3KIOSK') {
             $site->where('MC', $mc_name);
         }
+
+//        dd($site->toRawSql());
 
         $siteList = $site->select(
             DB::raw('COALESCE("ADD SITE", 0) as site_count'),
