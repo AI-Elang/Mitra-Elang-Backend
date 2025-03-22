@@ -176,12 +176,25 @@ class DashboardService
         $mcid = auth('api')->user()->territory_id;
         $role = auth('api')->user()->role;
         $branch = $request->get('branch');
+        $role_label= auth('api')->user()->role_label;
 
-        $pt_name = DB::table('mitra_table')
-            ->select('nama_mitra')
-            ->where('id_mitra', $username)
-            ->first()
-            ->nama_mitra;
+//        $pt_name = DB::table('mitra_table')
+//            ->select('nama_mitra')
+//            ->where('id_mitra', $username)
+//            ->first()
+//            ->nama_mitra;
+
+        if ($role_label == "MPC" || $role_label == "3KIOSK" || $role_label == "MITRAIM3") {
+            $pt_name = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+                ->select('PARTNER_NAME')
+                ->where('PARTNER_ID', $username)
+                ->first())->PARTNER_NAME;
+        } else if ($role_label == "MP3") {
+            $pt_name = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+                ->select('NAMA_PT')
+                ->where('PARTNER_ID', $username)
+                ->first())->NAMA_PT;
+        }
 
         $mc_name = DB::table('territory_dashboards')
             ->select('name')
