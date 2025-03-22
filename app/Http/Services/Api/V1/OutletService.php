@@ -47,7 +47,9 @@ class OutletService
                 "NAMA_PT" as partner_name,
                 "CATEGORY" as category,
                 brand,
-                "STATUS" as status'
+                "STATUS" as status,
+                longitude,
+                latitude'
             )
             ->where($ptfilter,   'like', '%' . $partner_name . '%')
             ->where('brand', $brand)
