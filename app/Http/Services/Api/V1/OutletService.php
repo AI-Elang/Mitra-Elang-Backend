@@ -65,16 +65,21 @@ public function listKecamatanByMc(Request $request)
         $mc_id = auth('api')->user()->territory_id;
         $role = auth('api')->user()->role;
         $username = auth('api')->user()->username;
+        $role_label = auth('api')->user()->role_label;
 
         $branch = $request->get('branch');
 
-        $pt_name = DB::table('mitra_table')
-            ->select('nama_mitra')
-            ->where('id_mitra', $username)
-            ->first()
-            ->nama_mitra;
-
-//        dd($pt_name);
+        if ($role_label == "MPC" || $role_label == "3KIOSK" || $role_label == "MITRAIM3") {
+            $pt_name = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+                ->select('PARTNER_NAME')
+                ->where('PARTNER_ID', $username)
+                ->first())->PARTNER_NAME;
+        } else if ($role_label == "MP3") {
+            $pt_name = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+                ->select('NAMA_PT')
+                ->where('PARTNER_ID', $username)
+                ->first())->NAMA_PT;
+        }
 
         $mc_data = DB::table('territories')
             ->select("id", "id_secondary", "name")

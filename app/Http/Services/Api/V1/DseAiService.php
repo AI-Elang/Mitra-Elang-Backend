@@ -353,11 +353,14 @@ class DseAiService
         $month = $request->get('month');
         $year = $request->get('year');
 
-        $branchId = DB::table('territory_dashboards')
-            ->where('name', $branch)
+        $branch_brand = $branch . ' ' . $brand;
+
+        $branchId = DB::table('territories')
+            ->where('name', $branch_brand)
             ->value('id');
 
         $role = auth()->user()->role;
+        $role_label = auth()->user()->role_label;
 
         if ($month == null || $year == null) {
             throw new \Exception('Month and year are required', 400);
@@ -387,26 +390,48 @@ class DseAiService
         {
             $getFilter = 'BSM';
             $valueFilter = $branch;
-            $userfilter = 'PARTNER_NAME';
-            $userfilterValue = DB::table('mitra_table')
-                ->select('nama_mitra')
-                ->where('id_mitra', $username)
-                ->first()
-                ->nama_mitra;
+
+
+            if ($role_label == 'MPC')
+            {
+                $userfilter = 'PARTNER_NAME';
+                $userfilterValue = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+                    ->select('PARTNER_NAME')
+                    ->where('PARTNER_ID', $username)
+                    ->first())->PARTNER_NAME;
+            }
+            else
+            {
+                $userfilter = 'NAMA_PT';
+                $userfilterValue = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+                    ->select('NAMA_PT')
+                    ->where('PARTNER_ID', $username)
+                    ->first())->NAMA_PT;
+            }
+
+//            $userfilterValue = DB::table('mitra_table')
+//                ->select('nama_mitra')
+//                ->where('id_mitra', $username)
+//                ->first()
+//                ->nama_mitra;
 
             $dseFilter = 't2.id';
             $dseValue = $branchId;
         }
+
+//        dd($getFilter, $valueFilter, $userfilter, $userfilterValue, $dseFilter, $dseValue);
 
         //FILTER DSE BY PT NAME + BRANCH OR MC
         $distinctDse = DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
             ->where($userfilter, $userfilterValue)
             ->where($getFilter, $valueFilter)
             ->distinct()
+//            ->toRawSql()
             ->pluck('DSE_CODE')
-            ->toArray();
+            ->toArray()
+        ;
 
-//        dd($getFilter, $valueFilter);
+//        dd($distinctDse);
 
         $dse = DB::table('dse as d')
             ->select('d.id_dse as dse_id', 'd.name as dse_name', 'd.id_unit', 'd.status', 't.name as territory_name', 't.id as territory_id')
@@ -417,6 +442,7 @@ class DseAiService
             ->where('t.is_active', 1)
             ->where('d.status', 1)
             ->get()
+//            ->toRawSql()
         ;
 
 //        dd($dse);
@@ -569,26 +595,23 @@ class DseAiService
         $branch = $request->get('branch');
         $role = auth()->user()->role;
         $brand = auth()->user()->brand;
+        $role_label = auth()->user()->role_label;
 
         if ($date == null) {
             throw new \Exception('Date is required', 400);
         }
 
-        $branchId = DB::table('territory_dashboards')
-            ->where('name', $branch)
+        $branch_brand = $branch . ' ' . $brand;
+
+        $branchId = DB::table('territories')
+            ->where('name', $branch_brand)
             ->value('id');
 
         $mc_no_brand = DB::table('territory_dashboards')
             ->where('id', $mcId)
             ->value('name');
 
-        $mc_no_brand = DB::table('territory_dashboards')
-            ->where('id', $mcId)
-            ->value('name');
-
         $mcName = $mc_no_brand . ' ' . $brand;
-
-
 
         if ($role == 6)
         {
@@ -608,12 +631,30 @@ class DseAiService
         {
             $getFilter = 'BSM';
             $valueFilter = $branch;
-            $userfilter = 'PARTNER_NAME';
-            $userfilterValue = DB::table('mitra_table')
-                ->select('nama_mitra')
-                ->where('id_mitra', $username)
-                ->first()
-                ->nama_mitra;
+
+
+            if ($role_label == 'MPC')
+            {
+                $userfilter = 'PARTNER_NAME';
+                $userfilterValue = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+                    ->select('PARTNER_NAME')
+                    ->where('PARTNER_ID', $username)
+                    ->first())->PARTNER_NAME;
+            }
+            else
+            {
+                $userfilter = 'NAMA_PT';
+                $userfilterValue = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+                    ->select('NAMA_PT')
+                    ->where('PARTNER_ID', $username)
+                    ->first())->NAMA_PT;
+            }
+
+//            $userfilterValue = DB::table('mitra_table')
+//                ->select('nama_mitra')
+//                ->where('id_mitra', $username)
+//                ->first()
+//                ->nama_mitra;
 
             $dseFilter = 't2.id';
             $dseValue = $branchId;

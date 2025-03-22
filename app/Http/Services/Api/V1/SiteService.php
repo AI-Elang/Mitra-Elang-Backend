@@ -47,12 +47,27 @@ class SiteService
         }
 
         if ($roleLabel == 'MPC' || $roleLabel == 'MP3') {
-            $filter_pt = DB::connection('pgsql')->table('mitra_table')
-                ->select('id_mitra', 'nama_mitra')
-                ->where('is_active', true)
-                ->where('id_mitra', $username)
-                ->first()->nama_mitra; // Ambil satu baris data
-            $filter_pt = substr($filter_pt, 0, -4) . '_ PT';
+            if ($roleLabel == 'MPC') {
+                $filter_pt = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+                    ->select('PARTNER_NAME')
+                    ->where('PARTNER_ID', $username)
+                    ->first())->PARTNER_NAME;
+            } else {
+                $filter_pt = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+                    ->select('NAMA_PT')
+                    ->where('PARTNER_ID', $username)
+                    ->first())->NAMA_PT;
+            }
+
+//            $filter_pt = DB::connection('pgsql')->table('mitra_table')
+//                ->select('id_mitra', 'nama_mitra')
+//                ->where('is_active', true)
+//                ->where('id_mitra', $username)
+//                ->first()->nama_mitra; // Ambil satu baris data
+            if (substr($filter_pt, -4) === ' PT ') {
+                $filter_pt = substr($filter_pt, 0, -4) . ', PT';
+            }
+//            $filter_pt = substr($filter_pt, 0, -4) . '_ PT';
             $areaFilter = 'BSM';
             $areaValue = $branch;
         }
@@ -62,6 +77,8 @@ class SiteService
             $areaValue = $mc_name;
         }
 
+//        dd($filter_pt, $areaFilter, $areaValue);
+
         // To Do : To CONNECT TO SERVER
         $data = DB::connection('pgsql2')
             ->table('PREP_RAPI_IMPALA_SITE_BULAN_INI')
@@ -70,7 +87,7 @@ class SiteService
             "' . $pt_column . '" AS pt_name,
             "LRK" AS lrk
             ')
-            ->where($pt_column, $filter_pt)
+            ->where($pt_column,'like','%' .  $filter_pt . '%')
             ->where($areaFilter, $areaValue)
             ->get();
 
