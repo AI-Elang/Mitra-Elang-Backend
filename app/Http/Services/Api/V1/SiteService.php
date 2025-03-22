@@ -64,15 +64,23 @@ class SiteService
 //                ->where('is_active', true)
 //                ->where('id_mitra', $username)
 //                ->first()->nama_mitra; // Ambil satu baris data
-            if (substr($filter_pt, -4) === ' PT ') {
-                $filter_pt = substr($filter_pt, 0, -4) . ', PT';
+            if (substr($filter_pt, -4) === ', PT') {
+                $filter_pt = substr($filter_pt, 0, -4) . '_ PT';
             }
 //            $filter_pt = substr($filter_pt, 0, -4) . '_ PT';
             $areaFilter = 'BSM';
             $areaValue = $branch;
         }
         else if ($roleLabel === 'MITRAIM3' || '3KIOSK') {
-            $filter_pt = $username;
+            if ($roleLabel == 'MITRAIM3') {
+                $filter_pt = $username;
+            } else {
+                $filter_pt = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+                    ->select('PARTNER_NAME')
+                    ->where('PARTNER_ID', $username)
+                    ->first())->PARTNER_NAME;
+            }
+
             $areaFilter = 'MC';
             $areaValue = $mc_name;
         }
@@ -89,7 +97,11 @@ class SiteService
             ')
             ->where($pt_column,'like','%' .  $filter_pt . '%')
             ->where($areaFilter, $areaValue)
-            ->get();
+//            ->get()
+            ->toRawSql()
+        ;
+
+        dd($data);
 
         return $data;
     }

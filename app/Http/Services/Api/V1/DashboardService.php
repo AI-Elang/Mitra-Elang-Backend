@@ -308,11 +308,12 @@ class DashboardService
         }
 
         if ($roleLabel === 'MPC' || $roleLabel === 'MP3' || $roleLabel === '3KIOSK)') {
-            if (substr($profile->nama_mitra, -4) === ' PT ') {
-                $filter = substr($profile->nama_mitra, 0, -4) . ', PT';
-            } else {
-                $filter = $profile->nama_mitra;
-            }
+//            if (substr($profile->nama_mitra, -4) === ' PT ') {
+//                $filter = substr($profile->nama_mitra, 0, -4) . ', PT';
+//            } else {
+//                $filter = $profile->nama_mitra;
+//            }
+            $filter = $profile->nama_mitra;
 
 
         } else if ($roleLabel === 'MITRAIM3') {
