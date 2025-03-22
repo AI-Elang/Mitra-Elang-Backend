@@ -97,11 +97,11 @@ class SiteService
             ')
             ->where($pt_column,'like','%' .  $filter_pt . '%')
             ->where($areaFilter, $areaValue)
-//            ->get()
-            ->toRawSql()
+            ->get()
+//            ->toRawSql()
         ;
 
-        dd($data);
+//        dd($data);
 
         return $data;
     }
