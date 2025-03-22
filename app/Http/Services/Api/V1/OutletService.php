@@ -80,11 +80,13 @@ public function listKecamatanByMc(Request $request)
                 ->select('PARTNER_NAME')
                 ->where('PARTNER_ID', $username)
                 ->first())->PARTNER_NAME;
+            $pt_filter = "PARTNER_NAME";
         } else if ($role_label == "MP3") {
             $pt_name = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
                 ->select('NAMA_PT')
                 ->where('PARTNER_ID', $username)
                 ->first())->NAMA_PT;
+            $pt_filter = "NAMA_PT";
         }
 
         $mc_data = DB::table('territories')
@@ -116,7 +118,7 @@ public function listKecamatanByMc(Request $request)
         $data = DB::connection('pgsql2')
             ->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
             ->selectRaw('DISTINCT "KEC_BRANCHH", "NAMA_PT"')
-            ->where("NAMA_PT", $pt_name)
+            ->where($pt_filter, $pt_name)
             ->whereNotNull("NAMA_PT");
 //            ->whereNotNull("CATEGORY");
 
