@@ -283,8 +283,15 @@ class DashboardService
             ->select(DB::raw("\"$ptfilter\" AS nama_mitra"))
             ->where('PARTNER_ID', $username)
             ->first()
-//            ->$ptfilter
+            ;
         ;
+
+        if ($roleLabel == 'MITRAIM3') {
+            $nama_ptfilter = $username;
+        }
+        else {
+            $nama_ptfilter = $nama_pt->nama_mitra;
+        }
 
 
 
@@ -329,7 +336,7 @@ class DashboardService
 
         // Ambil data dari database kedua
         $site = DB::connection('pgsql2')->table('ELANG_MTD_PARTNER')
-            ->where('PARTNER_NAME', 'like', '%' . $nama_pt->nama_mitra . '%' )
+            ->where('PARTNER_NAME', 'like', '%' . $nama_ptfilter . '%' )
             ->where('STATUS', 'VALID');
 
 //         Tambahkan kondisi jika rolelabel adalah MPC atau MP3

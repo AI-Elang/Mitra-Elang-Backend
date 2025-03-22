@@ -12,6 +12,8 @@ class OutletService
         $partner_name = $request->route('pt');
         $kecamatan = $request->route('kecamatan');
         $mc_id = auth('api')->user()->territory_id;
+        $role_label = auth('api')->user()->role_label;
+        $brand = auth('api')->user()->brand;
 
         if (!$partner_name || $partner_name == ":pt") {
             throw new \Exception('Partner Name is required', 400);
@@ -31,10 +33,10 @@ class OutletService
             throw new \Exception('MC not found', 404);
         }
 
-        $mc_brand = Str::substr($mc->name, -3);
-
-        if ($mc_brand != $mc->brand) {
-            throw new \Exception('Brand mismatch: ' . $mc->brand . ' vs ' . $mc_brand, 400);
+        if ($role_label == "MPC" || $role_label == "3KIOSK" || $role_label == "MITRAIM3") {
+            $ptfilter = "PARTNER_NAME";
+        } else if ($role_label == "MP3") {
+            $ptfilter = "NAMA_PT";
         }
 
         $data = DB::connection('pgsql2')
@@ -47,12 +49,16 @@ class OutletService
                 brand,
                 "STATUS" as status'
             )
-            ->whereRaw('UPPER("NAMA_PT") = ?', [Str::upper($partner_name)])
-            ->where('brand', $mc_brand)
+            ->where('NAMA_PT',   'like', '%' . $partner_name . '%')
+            ->where('brand', $brand)
             ->where('STATUS', 'VALID')
             ->whereNotNull('CATEGORY')
             ->where('KEC_BRANCHH', $kecamatan)
-            ->get();
+//            ->toRawSql()
+            ->get()
+        ;
+
+//        dd($data);
 
         return $data;
     }
