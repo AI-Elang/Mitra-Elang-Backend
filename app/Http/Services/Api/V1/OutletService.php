@@ -49,7 +49,7 @@ class OutletService
                 brand,
                 "STATUS" as status'
             )
-            ->where('NAMA_PT',   'like', '%' . $partner_name . '%')
+            ->where($ptfilter,   'like', '%' . $partner_name . '%')
             ->where('brand', $brand)
             ->where('STATUS', 'VALID')
             ->whereNotNull('CATEGORY')

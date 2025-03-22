@@ -212,6 +212,7 @@ class DashboardService
             $profile->where('MC', $mc_name->name)
                     ->where('id_mitra', $username);
         }
+//        dd($profile->toRawSql());
 
 // Eksekusi query dan ambil datanya
         $profileData = $profile->get()->map(function ($item) {
