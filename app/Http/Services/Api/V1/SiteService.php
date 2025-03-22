@@ -64,8 +64,8 @@ class SiteService
 //                ->where('is_active', true)
 //                ->where('id_mitra', $username)
 //                ->first()->nama_mitra; // Ambil satu baris data
-            if (substr($filter_pt, -4) === ', PT') {
-                $filter_pt = substr($filter_pt, 0, -4) . '_ PT';
+            if (substr($filter_pt, -3) === ' PT') {
+                $filter_pt = substr($filter_pt, 0, -4);
             }
 //            $filter_pt = substr($filter_pt, 0, -4) . '_ PT';
             $areaFilter = 'BSM';

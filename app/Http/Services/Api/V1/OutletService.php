@@ -23,6 +23,10 @@ class OutletService
             throw new \Exception('Kecamatan is required', 400);
         }
 
+        if (substr($partner_name, -3) === ' PT') {
+            $partner_name = substr($partner_name, 0, -4);
+        }
+
         $mc = DB::table('territories')
             ->select('id', 'name', 'brand')
             ->where('id', $mc_id)
