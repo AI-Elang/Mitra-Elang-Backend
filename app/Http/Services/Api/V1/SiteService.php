@@ -184,18 +184,23 @@ class SiteService
             throw new \Exception('Site not found', 404);
         }
 
+        // Format asof_dt ke dd-mm-yy
+        if ($data->asof_dt) {
+            $data->asof_dt = date('d-m-y', strtotime($data->asof_dt));
+        }
+
         $data = collect($data);
 
         // Temukan posisi key `category`
         $index = $data->keys()->search('category');
 
-        // Pisahkan collection menjadi dua bagian: sebelum dan sesudah `category`
+        // Pisahkan collection
         $before = $data->take($index + 1);
         $after = $data->skip($index + 1);
 
-        // Gabungkan dengan key `brand`
         return $before->merge(['brand' => $brand])->merge($after);
     }
+
 
     public function siteDetailRevenue($site_id)
     {

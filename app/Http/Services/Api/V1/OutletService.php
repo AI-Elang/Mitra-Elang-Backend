@@ -207,9 +207,10 @@ public function listKecamatanByMc(Request $request)
                 brand,
                 latitude,
                 longitude,
-                mtd_dt,
+                to_char(mtd_dt, \'DD-MM-YY\') as mtd_dt,
                 "STATUS" as status'
             )
+
             ->where('QR_CODE', $qr_code)
             ->where('STATUS', 'VALID')
             ->first();
