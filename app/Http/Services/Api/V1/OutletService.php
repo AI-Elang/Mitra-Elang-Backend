@@ -207,7 +207,7 @@ public function listKecamatanByMc(Request $request)
                 brand,
                 latitude,
                 longitude,
-                to_char(mtd_dt, \'DD-MM-YY\') as mtd_dt,
+                to_char(mtd_dt, \'DD-MM-YYYY\') as mtd_dt,
                 "STATUS" as status'
             )
 

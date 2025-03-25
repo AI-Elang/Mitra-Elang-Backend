@@ -186,7 +186,7 @@ class SiteService
 
         // Format asof_dt ke dd-mm-yy
         if ($data->asof_dt) {
-            $data->asof_dt = date('d-m-y', strtotime($data->asof_dt));
+            $data->asof_dt = date('d-m-Y', strtotime($data->asof_dt));
         }
 
         $data = collect($data);
