@@ -60,11 +60,8 @@ class OutletService
             ->where('STATUS', 'VALID')
             ->whereNotNull('CATEGORY')
             ->where('KEC_BRANCHH', $kecamatan)
-//            ->toRawSql()
             ->get()
         ;
-
-//        dd($data);
 
         return $data;
     }
@@ -113,11 +110,6 @@ public function listKecamatanByMc(Request $request)
 
         // Get the name and brand from the microcluster name
         $mc_name = Str::substr($mc_upper, 0, -4);
-//        $mc_brand = Str::substr($mc_upper, -3);
-
-//        if ($mc_brand !== $brand) {
-//            throw new \Exception('Brand with the name of ' . $brand . ' does not match with Microcluster\'s brand of ' . $mc_brand, 400);
-//        }
 
 
         // To Do : To CONNECT TO SERVER
@@ -134,8 +126,6 @@ public function listKecamatanByMc(Request $request)
         else if ($role == 6) {
             $data->where('MC', $mc_name);
         }
-//        dd($data->toRawSql());
-
         return $data->get();
     }
 

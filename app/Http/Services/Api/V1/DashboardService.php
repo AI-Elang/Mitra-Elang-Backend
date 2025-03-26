@@ -49,8 +49,6 @@ class DashboardService
                     ->first())->NAMA_PT;
             }
         }
-
-//        dd($usernameFilter);
         $regionId = $this->getRegionId($mcId);
 
         $parameters = DB::table('parameter_mitra as p')
@@ -178,12 +176,6 @@ class DashboardService
         $branch = $request->get('branch');
         $role_label= auth('api')->user()->role_label;
 
-//        $pt_name = DB::table('mitra_table')
-//            ->select('nama_mitra')
-//            ->where('id_mitra', $username)
-//            ->first()
-//            ->nama_mitra;
-
         if ($role_label == "MPC" || $role_label == "3KIOSK" || $role_label == "MITRAIM3") {
             $pt_name = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
                 ->select('PARTNER_NAME')
@@ -201,10 +193,8 @@ class DashboardService
             ->where('id', $mcid)
             ->first();
         $profile = DB::table('elang_mitra_sampah')
-
             ->orderBy('URUTAN'); // Order by 'URUTAN' in ascending order
 
-//        dd($profile->get());
         if ($role == 7) {
             $profile->where('MC', $branch)
                     ->where('id_mitra', $pt_name);
@@ -212,7 +202,6 @@ class DashboardService
             $profile->where('MC', $mc_name->name)
                     ->where('id_mitra', $username);
         }
-//        dd($profile->toRawSql());
 
 // Eksekusi query dan ambil datanya
         $profileData = $profile->get()->map(function ($item) {
@@ -316,39 +305,18 @@ class DashboardService
         if (!$profile) {
             return 'Profile data not found';
         }
-
-//        if ($roleLabel === 'MPC' || $roleLabel === 'MP3' || $roleLabel === '3KIOSK)') {
-//            if (substr($profile->nama_mitra, -4) === ' PT ') {
-//                $filter = substr($profile->nama_mitra, 0, -4) . ', PT';
-//            } else {
-//                $filter = $profile->nama_mitra;
-//            }
-//            $filter = $profile->nama_mitra;
-//
-//
-//        } else if ($roleLabel === 'MITRAIM3') {
-//                $filter = $username;
-//        }else {
-//            // Optional: decide what the default filter should be
-//            $filter = $profile->nama_mitra; // or handle error
-//        }
-
-
-
         // Ambil data dari database kedua
         $site = DB::connection('pgsql2')->table('ELANG_MTD_PARTNER')
             ->where('PARTNER_NAME', 'like', '%' . $nama_ptfilter . '%' )
             ->where('STATUS', 'VALID');
 
-//         Tambahkan kondisi jika rolelabel adalah MPC atau MP3
+        //Tambahkan kondisi jika rolelabel adalah MPC atau MP3
         if ($roleLabel === 'MPC' || $roleLabel === 'MP3') {
             $site->where('BSM', $branch);
         }
         else if ($roleLabel === 'MITRAIM3' || '3KIOSK') {
             $site->where('MC', $mc_name);
         }
-
-//        dd($site->toRawSql());
 
         $siteList = $site->select(
             DB::raw('COALESCE("ADD SITE", 0) as site_count'),
@@ -387,16 +355,11 @@ class DashboardService
                 ->first())->NAMA_PT;
         }
 
-//        dd($ptName);
-
         $branches = DB::table('mitra_table')
             ->where('nama_mitra', 'like', '%' . $ptName . '%')
             ->select('branch', 'id_mitra')
             ->distinct()
             ->get();
-
-
-//        dd($branches);
 
 
         // Prioritaskan branch dengan id_mitra = $username

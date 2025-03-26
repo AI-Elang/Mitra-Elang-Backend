@@ -589,78 +589,37 @@ class DseAiService
 
     public function getDseAiDaily($request)
     {
-        $username = auth()->user()->username;
-        $mcId = auth()->user()->territory_id;
+        $user = auth()->user();
         $date = $request->get('date');
         $branch = $request->get('branch');
-        $role = auth()->user()->role;
-        $brand = auth()->user()->brand;
-        $role_label = auth()->user()->role_label;
 
-        if ($date == null) {
-            throw new \Exception('Date is required', 400);
-        }
+        if (!$date) throw new \Exception('Date is required', 400);
 
-        $branch_brand = $branch . ' ' . $brand;
+        $branch_brand = $branch . ' ' . $user->brand;
+        $branchId = DB::table('territories')->where('name', $branch_brand)->value('id');
+        $mcName = DB::table('territory_dashboards')->where('id', $user->territory_id)->value('name') . ' ' . $user->brand;
 
-        $branchId = DB::table('territories')
-            ->where('name', $branch_brand)
-            ->value('id');
-
-        $mc_no_brand = DB::table('territory_dashboards')
-            ->where('id', $mcId)
-            ->value('name');
-
-        $mcName = $mc_no_brand . ' ' . $brand;
-
-        if ($role == 6)
-        {
-            $mcId = DB::table('territories')
-                ->where('name', $mcName)
-                ->value('id');
-
+        if ($user->role == 6) {
+            $mcId = DB::table('territories')->where('name', $mcName)->value('id');
             $getFilter = 'MC';
-            $valueFilter = $mc_no_brand;
-            $userfilterValue = $username;
+            $valueFilter = $mcName;
             $userfilter = 'PARTNER_ID';
-
+            $userfilterValue = $user->username;
             $dseFilter = 't.id';
             $dseValue = $mcId;
-        }
-        else if ($role == 7)
-        {
+        } else {
             $getFilter = 'BSM';
             $valueFilter = $branch;
-
-
-            if ($role_label == 'MPC')
-            {
-                $userfilter = 'PARTNER_NAME';
-                $userfilterValue = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
-                    ->select('PARTNER_NAME')
-                    ->where('PARTNER_ID', $username)
-                    ->first())->PARTNER_NAME;
-            }
-            else
-            {
-                $userfilter = 'NAMA_PT';
-                $userfilterValue = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
-                    ->select('NAMA_PT')
-                    ->where('PARTNER_ID', $username)
-                    ->first())->NAMA_PT;
-            }
-
-//            $userfilterValue = DB::table('mitra_table')
-//                ->select('nama_mitra')
-//                ->where('id_mitra', $username)
-//                ->first()
-//                ->nama_mitra;
-
+            $userfilter = ($user->role_label == 'MPC') ? 'PARTNER_NAME' : 'NAMA_PT';
+            $userfilterValue = optional(DB::connection('pgsql2')
+                ->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+                ->select($userfilter)
+                ->where('PARTNER_ID', $user->username)
+                ->first())->$userfilter;
             $dseFilter = 't2.id';
             $dseValue = $branchId;
         }
 
-        //FILTER DSE BY PT NAME + BRANCH OR MC
         $distinctDse = DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
             ->where($userfilter, $userfilterValue)
             ->where($getFilter, $valueFilter)
@@ -669,7 +628,7 @@ class DseAiService
             ->toArray();
 
         $dse = DB::table('dse as d')
-            ->select('d.id_dse as dse_id', 'd.name as dse_name', 'd.id_unit', 'd.status', 't.name as territory_name', 't.id as territory_id')
+            ->select('d.id_dse as dse_id', 'd.name as dse_name', 't.name as territory_name', 't.id as territory_id')
             ->join('territories as t', 'd.id_unit', '=', 't.id')
             ->join('territories as t2', 't.id_secondary', '=', 't2.id')
             ->whereIn('d.id_dse', $distinctDse)
@@ -680,168 +639,120 @@ class DseAiService
         $dseIds = $dse->pluck('dse_id')->toArray();
 
         $dse_daily_data = DB::table('showcases')
-            ->select(
-                'username',
-                DB::raw('COALESCE(SUM(voucher_im3), 0) as voucher_im3'),
-                DB::raw('COALESCE(SUM(voucher_tri), 0) as voucher_tri'),
-                DB::raw('COALESCE(SUM(perdana_im3), 0) as perdana_im3'),
-                DB::raw('COALESCE(SUM(perdana_tri), 0) as perdana_tri'),
-                DB::raw('COALESCE(SUM(sellin_sp), 0) as sp'),
-                DB::raw('COALESCE(SUM(sellin_voucher), 0) as vou'),
-                DB::raw('COALESCE(SUM(sellin_salmo), 0) as salmo'),
-                DB::raw('COALESCE(COUNT(outlet_id), 0) as visit'),
-            )
-            ->groupBy('username')
+            ->select('username',
+                DB::raw('COALESCE(SUM(voucher_im3),0) as voucher_im3'),
+                DB::raw('COALESCE(SUM(voucher_tri),0) as voucher_tri'),
+                DB::raw('COALESCE(SUM(perdana_im3),0) as perdana_im3'),
+                DB::raw('COALESCE(SUM(perdana_tri),0) as perdana_tri'),
+                DB::raw('COALESCE(SUM(sellin_sp),0) as sp'),
+                DB::raw('COALESCE(SUM(sellin_voucher),0) as vou'),
+                DB::raw('COALESCE(SUM(sellin_salmo),0) as salmo'),
+                DB::raw('COALESCE(COUNT(outlet_id),0) as visit'),
+
+                DB::raw('COALESCE(SUM("voucher_tri_DSE"),0) as "voucher_tri_DSE"'),
+                DB::raw('COALESCE(SUM("voucher_im3_DSE"),0) as "voucher_im3_DSE"'),
+                DB::raw('COALESCE(SUM("perdana_im3_DSE"),0) as "perdana_im3_DSE"'),
+                DB::raw('COALESCE(SUM("perdana_tri_DSE"),0) as "perdana_tri_DSE"'),
+                DB::raw('COALESCE(SUM("attract"),0) as attract'),
+                DB::raw('COALESCE(SUM("educate"),0) as educate'),
+                DB::raw('COALESCE(SUM("purchase"),0) as purchase'))
+
             ->whereIn('username', $dseIds)
-            ->whereRaw('DATE(date) = ?', [$date])
+            ->whereDate('date', $date)
+            ->groupBy('username')
             ->get();
 
-        // Fetch all check-in times in a single query
-        $showcaseIns = DB::table('showcases')
-            ->select('username', DB::raw('MIN(date) as date'))
-            ->whereIn('username', $dseIds)
-            ->whereRaw('DATE(date) = ?', [$date])
-            ->groupBy('username')
-            ->get()
-            ->keyBy('username');
+        $checkins = DB::table('showcases')->select('username', DB::raw('MIN(date) as date'))
+            ->whereIn('username', $dseIds)->whereDate('date', $date)->groupBy('username')->get()->keyBy('username');
 
-        // Fetch all check-out times in a single query
-        $showcaseOuts = DB::table('showcases')
-            ->select('username', DB::raw('MAX(status_timestamp) as status_timestamp'))
-            ->whereIn('username', $dseIds)
-            ->whereRaw('DATE(date) = ?', [$date])
-            ->groupBy('username')
-            ->get()
-            ->keyBy('username');
+        $checkouts = DB::table('showcases')->select('username', DB::raw('MAX(status_timestamp) as status_timestamp'))
+            ->whereIn('username', $dseIds)->whereDate('date', $date)->groupBy('username')->get()->keyBy('username');
 
-        // Fetch all zero counts in a single query
-        $zeroCounts = DB::table('showcases')
-            ->select('username', DB::raw('COUNT(outlet_id) as zero'))
-            ->whereIn('username', $dseIds)
-            ->whereRaw('DATE(date) = ?', [$date])
+        $zeroCounts = DB::table('showcases')->select('username', DB::raw('COUNT(outlet_id) as zero'))
+            ->whereIn('username', $dseIds)->whereDate('date', $date)
             ->whereRaw('sellin_sp = 0 AND sellin_voucher = 0 AND sellin_salmo = 0')
-            ->groupBy('username')
-            ->get()
-            ->keyBy('username');
+            ->groupBy('username')->get()->keyBy('username');
 
-        // Fetch all target PJPs in a single query from the second database
-        $targetPjps = DB::connection('pgsql2')
-            ->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+        $targetPjps = DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
             ->select('DSE_CODE', DB::raw('COUNT("QR_CODE") as target_pjp'))
             ->whereIn('DSE_CODE', $dseIds)
-            ->groupBy('DSE_CODE')
-            ->get()
-            ->keyBy('DSE_CODE');
+            ->groupBy('DSE_CODE')->get()->keyBy('DSE_CODE');
 
-        // Match the data count within showcase and the existing outlet data on the second database
-        // based on the data of outlet_ids within showcases
-        $outletIds = DB::table('showcases')
+        $outletCounts = DB::table('showcases')
             ->select('outlet_id', 'username')
             ->whereIn('username', $dseIds)
-            ->whereRaw('DATE(date) = ?', [$date])
-            ->get();
+            ->whereDate('date', $date)
+            ->get()
+            ->groupBy('username')
+            ->map(fn($outlets) => ['actual_pjp' => $outlets->count()]);
 
-        $actualPjps = collect($outletIds)->groupBy('username')->map(function ($item) {
-            return [
-                'username' => $item->first()->username,
-                'actual_pjp' => $item->count(),
-            ];
-        })
-            ->keyBy('username');
-
-        // Process all data
-        foreach ($dse_daily_data as $d) {
-            $username = $d->username;
-
-            // Get check-in time
-            $d->checkin = isset($showcaseIns[$username]) && !empty($showcaseIns[$username]->date)
-                ? Carbon::parse($showcaseIns[$username]->date)->format('H:i:s')
-                : '-';
-
-            // Get check-out time
-            $d->checkout = isset($showcaseOuts[$username]) && !empty($showcaseOuts[$username]->status_timestamp)
-                ? Carbon::parse($showcaseOuts[$username]->status_timestamp)->format('H:i:s')
-                : '-';
-
-            // Calculate duration
-            $d->duration = ($d->checkin !== '-' && $d->checkout !== '-')
-                ? Carbon::parse($showcaseIns[$username]->date)->diff(Carbon::parse($showcaseOuts[$username]->status_timestamp))->format('%H:%I:%S')
-                : '-';
-
-            // Get zero count
-            $d->zero = isset($zeroCounts[$username]) ? $zeroCounts[$username]->zero : 0;
-
-            // Get target PJP
-//            $d->target_pjp = isset($targetPjps[$username]) && $targetPjps[$username]->target_pjp != 0 ? ceil($targetPjps[$username]->target_pjp / 24) : 0;
-            $d->target_pjp = 15;
-
-            // Get actual PJP
-            $d->actual_pjp = isset($actualPjps[$username]) ? $actualPjps[$username]['actual_pjp'] : 0;
+        foreach ($dse_daily_data as $data) {
+            $username = $data->username;
+            $data->checkin = isset($checkins[$username]) ? Carbon::parse($checkins[$username]->date)->format('H:i:s') : '-';
+            $data->checkout = isset($checkouts[$username]) ? Carbon::parse($checkouts[$username]->status_timestamp)->format('H:i:s') : '-';
+            $data->duration = ($data->checkin !== '-' && $data->checkout !== '-') ?
+                Carbon::parse($checkins[$username]->date)->diff(Carbon::parse($checkouts[$username]->status_timestamp))->format('%H:%I:%S') : '-';
+            $data->zero = $zeroCounts[$username]->zero ?? 0;
+            $data->target_pjp = 15; // Default nilai target PJP
+            $data->actual_pjp = $outletCounts[$username]['actual_pjp'] ?? 0;
         }
 
         foreach ($dse as $d) {
-            $d->perdana_im3 = "0";
-            $d->perdana_tri = "0";
-            $d->voucher_im3 = "0";
-            $d->voucher_tri = "0";
-            $d->visit = "0";
-            $d->sp = "0";
-            $d->vou = "0";
-            $d->salmo = "0";
+            $match = $dse_daily_data->firstWhere('username', $d->dse_id);
+            $d->perdana_im3 = $this->format_number($match->perdana_im3 ?? 0);
+            $d->perdana_tri = $this->format_number($match->perdana_tri ?? 0);
+            $d->voucher_im3 = $this->format_number($match->voucher_im3 ?? 0);
+            $d->voucher_tri = $this->format_number($match->voucher_tri ?? 0);
+            $d->voucher_tri_DSE = $this->format_number($match->voucher_tri_DSE ?? 0);
+            $d->voucher_im3_DSE = $this->format_number($match->voucher_im3_DSE ?? 0);
+            $d->perdana_im3_DSE = $this->format_number($match->perdana_im3_DSE ?? 0);
+            $d->perdana_tri_DSE = $this->format_number($match->perdana_tri_DSE ?? 0);
+            $d->attract = $this->format_number($match->attract ?? 0);
+            $d->educate = $this->format_number($match->educate ?? 0);
+            $d->purchase = $this->format_number($match->purchase ?? 0);
+            $d->visit = $this->format_number($match->visit ?? 0);
+            $d->sp = $this->format_number($match->sp ?? 0);
+            $d->vou = $this->format_number($match->vou ?? 0);
+            $d->salmo = $this->format_number($match->salmo ?? 0);
             $d->mtd_dt = $date;
-            $d->checkin = '-';
-            $d->checkout = '-';
-            $d->duration = '-';
-            $d->target_pjp = "0";
-            $d->actual_pjp = "0";
-            $d->percentage = "0";
-
-            foreach ($dse_daily_data as $dtd) {
-                if ($d->dse_id == $dtd->username) {
-                    $d->perdana_im3 = $this->format_number($dtd->perdana_im3);
-                    $d->perdana_tri = $this->format_number($dtd->perdana_tri);
-                    $d->voucher_im3 = $this->format_number($dtd->voucher_im3);
-                    $d->voucher_tri = $this->format_number($dtd->voucher_tri);
-                    $d->visit = $this->format_number($dtd->visit);
-                    $d->sp = $this->format_number($dtd->sp);
-                    $d->vou = $this->format_number($dtd->vou);
-                    $d->salmo = $this->format_number($dtd->salmo);
-                    $d->checkin = $dtd->checkin;
-                    $d->checkout = $dtd->checkout;
-                    $d->duration = $dtd->duration;
-                    $d->target_pjp = $this->format_number($dtd->target_pjp);
-                    $d->actual_pjp = $this->format_number($dtd->actual_pjp);
-                    $d->percentage = $dtd->target_pjp > 0 ? number_format(($dtd->actual_pjp / $dtd->target_pjp) * 100, 2) . '%' : '0';
-                }
-            }
+            $d->checkin = $match->checkin ?? '-';
+            $d->checkout = $match->checkout ?? '-';
+            $d->duration = $match->duration ?? '-';
+            $d->target_pjp = $this->format_number($match->target_pjp ?? 0);
+            $d->actual_pjp = $this->format_number($match->actual_pjp ?? 0);
+            $d->percentage = ($match->target_pjp ?? 0) > 0
+                ? number_format(($match->actual_pjp / $match->target_pjp) * 100, 2) . '%'
+                : '0';
         }
 
-        // Show only the selected data
-        $dse = collect($dse)->transform(function ($item) {
-            return [
-                'id' => $item->dse_id,
-                'name' => $item->dse_name,
-                'mc_id' => (int) $item->territory_id,
-                'mc_name' => $item->territory_name,
-                'perdana_im3' => $item->perdana_im3,
-                'perdana_tri' => $item->perdana_tri,
-                'voucher_im3' => $item->voucher_im3,
-                'voucher_tri' => $item->voucher_tri,
-                'visit' => $item->visit,
-                'sp' => $item->sp,
-                'vou' => $item->vou,
-                'salmo' => $item->salmo,
-                'mtd_dt' => $item->mtd_dt,
-                'checkin' => $item->checkin,
-                'checkout' => $item->checkout,
-                'duration' => $item->duration,
-                'target_pjp' => $item->target_pjp,
-                'actual_pjp' => $item->actual_pjp,
-                'percentage' => $item->percentage,
-            ];
-        });
-
-        return $dse;
+        return $dse->map(fn($d) => [
+            'id' => $d->dse_id,
+            'name' => $d->dse_name,
+            'mc_id' => (int) $d->territory_id,
+            'mc_name' => $d->territory_name,
+            'perdana_im3' => $d->perdana_im3,
+            'perdana_tri' => $d->perdana_tri,
+            'voucher_im3' => $d->voucher_im3,
+            'voucher_tri' => $d->voucher_tri,
+            'voucher_tri_DSE' => $d->voucher_tri_DSE,
+            'voucher_im3_DSE' => $d->voucher_im3_DSE,
+            'perdana_im3_DSE' => $d->perdana_im3_DSE,
+            'perdana_tri_DSE' => $d->perdana_tri_DSE,
+            'attract' => $d->attract,
+            'educate' => $d->educate,
+            'purchase' => $d->purchase,
+            'visit' => $d->visit,
+            'sp' => $d->sp,
+            'vou' => $d->vou,
+            'salmo' => $d->salmo,
+            'mtd_dt' => $d->mtd_dt,
+            'checkin' => $d->checkin,
+            'checkout' => $d->checkout,
+            'duration' => $d->duration,
+            'target_pjp' => $d->target_pjp,
+            'actual_pjp' => $d->actual_pjp,
+            'percentage' => $d->percentage,
+        ]);
     }
 
 

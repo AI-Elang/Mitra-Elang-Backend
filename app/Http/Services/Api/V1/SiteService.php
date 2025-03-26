@@ -33,11 +33,6 @@ class SiteService
 
         // Get the name and brand from the microcluster name
         $mc_name = Str::substr($mc_upper, 0, -4);
-//        $mc_brand = Str::substr($mc_upper, -3);
-//
-//        if ($mc_brand !== $brand) {
-//            throw new \Exception('Brand with the name of ' . $brand . ' does not match with Microcluster\'s brand of ' . $mc_brand, 400);
-//        }
 
         // Set which column to be queried based on the brand
         if ($brand === '3ID') {
@@ -58,16 +53,9 @@ class SiteService
                     ->where('PARTNER_ID', $username)
                     ->first())->NAMA_PT;
             }
-
-//            $filter_pt = DB::connection('pgsql')->table('mitra_table')
-//                ->select('id_mitra', 'nama_mitra')
-//                ->where('is_active', true)
-//                ->where('id_mitra', $username)
-//                ->first()->nama_mitra; // Ambil satu baris data
             if (substr($filter_pt, -3) === ' PT') {
                 $filter_pt = substr($filter_pt, 0, -4);
             }
-//            $filter_pt = substr($filter_pt, 0, -4) . '_ PT';
             $areaFilter = 'BSM';
             $areaValue = $branch;
         }
@@ -97,11 +85,8 @@ class SiteService
             ')
             ->where($pt_column,'like','%' .  $filter_pt . '%')
             ->where($areaFilter, $areaValue)
-            ->get()
-//            ->toRawSql()
-        ;
+            ->get();
 
-//        dd($data);
 
         return $data;
     }
@@ -124,12 +109,6 @@ class SiteService
         if ($brand != '3ID' && $brand != 'IM3') {
             throw new \Exception('Invalid Brand', 400);
         }
-
-        $mc_data = DB::table('territories')
-            ->select( "name")
-            ->where('id', $mcId)
-            ->where('is_active', 1)
-            ->first();
 
         $data = DB::connection('pgsql2')
             ->table('PREP_RAPI_IMPALA_SITE_BULAN_INI')
