@@ -589,37 +589,72 @@ class DseAiService
 
     public function getDseAiDaily($request)
     {
-        $user = auth()->user();
+        $username = auth()->user()->username;
+        $mcId = auth()->user()->territory_id;
         $date = $request->get('date');
         $branch = $request->get('branch');
+        $role = auth()->user()->role;
+        $brand = auth()->user()->brand;
+        $role_label = auth()->user()->role_label;
 
-        if (!$date) throw new \Exception('Date is required', 400);
+        if ($date == null) {
+            throw new \Exception('Date is required', 400);
+        }
 
-        $branch_brand = $branch . ' ' . $user->brand;
-        $branchId = DB::table('territories')->where('name', $branch_brand)->value('id');
-        $mcName = DB::table('territory_dashboards')->where('id', $user->territory_id)->value('name') . ' ' . $user->brand;
+        $branch_brand = $branch . ' ' . $brand;
 
-        if ($user->role == 6) {
-            $mcId = DB::table('territories')->where('name', $mcName)->value('id');
+        $branchId = DB::table('territories')
+            ->where('name', $branch_brand)
+            ->value('id');
+
+        $mc_no_brand = DB::table('territory_dashboards')
+            ->where('id', $mcId)
+            ->value('name');
+
+        $mcName = $mc_no_brand . ' ' . $brand;
+
+        if ($role == 6)
+        {
+            $mcId = DB::table('territories')
+                ->where('name', $mcName)
+                ->value('id');
+
             $getFilter = 'MC';
-            $valueFilter = $mcName;
+            $valueFilter = $mc_no_brand;
+            $userfilterValue = $username;
             $userfilter = 'PARTNER_ID';
-            $userfilterValue = $user->username;
+
             $dseFilter = 't.id';
             $dseValue = $mcId;
-        } else {
+        }
+        else if ($role == 7)
+        {
             $getFilter = 'BSM';
             $valueFilter = $branch;
-            $userfilter = ($user->role_label == 'MPC') ? 'PARTNER_NAME' : 'NAMA_PT';
-            $userfilterValue = optional(DB::connection('pgsql2')
-                ->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
-                ->select($userfilter)
-                ->where('PARTNER_ID', $user->username)
-                ->first())->$userfilter;
+
+
+            if ($role_label == 'MPC')
+            {
+                $userfilter = 'PARTNER_NAME';
+                $userfilterValue = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+                    ->select('PARTNER_NAME')
+                    ->where('PARTNER_ID', $username)
+                    ->first())->PARTNER_NAME;
+            }
+            else
+            {
+                $userfilter = 'NAMA_PT';
+                $userfilterValue = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+                    ->select('NAMA_PT')
+                    ->where('PARTNER_ID', $username)
+                    ->first())->NAMA_PT;
+            }
+
             $dseFilter = 't2.id';
             $dseValue = $branchId;
         }
 
+        //FILTER DSE BY PT NAME + BRANCH OR MC
         $distinctDse = DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
             ->where($userfilter, $userfilterValue)
             ->where($getFilter, $valueFilter)
@@ -628,7 +663,7 @@ class DseAiService
             ->toArray();
 
         $dse = DB::table('dse as d')
-            ->select('d.id_dse as dse_id', 'd.name as dse_name', 't.name as territory_name', 't.id as territory_id')
+            ->select('d.id_dse as dse_id', 'd.name as dse_name', 'd.id_unit', 'd.status', 't.name as territory_name', 't.id as territory_id')
             ->join('territories as t', 'd.id_unit', '=', 't.id')
             ->join('territories as t2', 't.id_secondary', '=', 't2.id')
             ->whereIn('d.id_dse', $distinctDse)
