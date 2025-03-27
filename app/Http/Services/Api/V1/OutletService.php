@@ -58,6 +58,7 @@ class OutletService
             ->where($ptfilter,   'like', '%' . $partner_name . '%')
             ->where('brand', $brand)
             ->where('STATUS', 'VALID')
+            ->whereNotNull('NAMA_TOKO')
             ->whereNotNull('CATEGORY')
             ->where('KEC_BRANCHH', $kecamatan)
             ->get()
