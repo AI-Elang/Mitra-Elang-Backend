@@ -133,58 +133,58 @@ class DashboardService
         return array_values($data);
     }
 
-//    public function profile(Request $request)
-//    {
-//        $username = auth('api')->user()->username;
-//        $mcid = auth('api')->user()->territory_id;
-//        $role = auth('api')->user()->role;
-//        $branch = $request->get('branch');
-//        $role_label= auth('api')->user()->role_label;
-//
-//        if ($role_label == "MPC" || $role_label == "3KIOSK" || $role_label == "MITRAIM3") {
-//            $pt_name = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
-//                ->select('PARTNER_NAME')
-//                ->where('PARTNER_ID', $username)
-//                ->first())->PARTNER_NAME;
-//        } else if ($role_label == "MP3") {
-//            $pt_name = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
-//                ->select('NAMA_PT')
-//                ->where('PARTNER_ID', $username)
-//                ->first())->NAMA_PT;
-//        }
-//
-//        $mc_name = DB::table('territory_dashboards')
-//            ->select('name')
-//            ->where('id', $mcid)
-//            ->first();
-//        $profile = DB::table('elang_mitra_sampah')
-//            ->orderBy('URUTAN'); // Order by 'URUTAN' in ascending order
-//
-//        if ($role == 7) {
-//            $profile->where('MC', $branch)
-//                    ->where('id_mitra', $pt_name);
-//        } else if ($role == 6) {
-//            $profile->where('MC', $mc_name->name)
-//                    ->where('id_mitra', $username);
-//        }
-//
-//// Eksekusi query dan ambil datanya
-//        $profileData = $profile->get()->map(function ($item) {
-//            $item->target = !empty($item->target) ? (int) $item->target : 0;
-//            $item->mtd = !empty($item->mtd) ? (int) $item->mtd : 0;
-//            $item->GROWTH = !empty($item->GROWTH) ? round($item->GROWTH, 2) : 0;
-//            $item->achievement = !empty($item->achievement) ? round($item->achievement, 2) : 0;
-//            $item->URUTAN = !empty($item->URUTAN) ? (int) $item->URUTAN : 0;
-//
-//            // Format 'mtd_date' dan 'last_update' jika ada
-//            $item->mtd_date = !empty($item->mtd_date) ? Carbon::parse($item->mtd_date)->format('d-m-Y') : '00-00-0000';
-//            $item->last_update = !empty($item->last_update) ? Carbon::parse($item->last_update)->format('d-m-Y') : '00-00-0000';
-//
-//            return $item;
-//        });
-//
-//        return $profileData;
-//    }
+    public function profile(Request $request)
+    {
+        $username = auth('api')->user()->username;
+        $mcid = auth('api')->user()->territory_id;
+        $role = auth('api')->user()->role;
+        $branch = $request->get('branch');
+        $role_label= auth('api')->user()->role_label;
+
+        if ($role_label == "MPC" || $role_label == "3KIOSK" || $role_label == "MITRAIM3") {
+            $pt_name = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+                ->select('PARTNER_NAME')
+                ->where('PARTNER_ID', $username)
+                ->first())->PARTNER_NAME;
+        } else if ($role_label == "MP3") {
+            $pt_name = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+                ->select('NAMA_PT')
+                ->where('PARTNER_ID', $username)
+                ->first())->NAMA_PT;
+        }
+
+        $mc_name = DB::table('territory_dashboards')
+            ->select('name')
+            ->where('id', $mcid)
+            ->first();
+        $profile = DB::table('elang_mitra_sampah')
+            ->orderBy('URUTAN'); // Order by 'URUTAN' in ascending order
+
+        if ($role == 7) {
+            $profile->where('MC', $branch)
+                    ->where('id_mitra', $pt_name);
+        } else if ($role == 6) {
+            $profile->where('MC', $mc_name->name)
+                    ->where('id_mitra', $username);
+        }
+
+// Eksekusi query dan ambil datanya
+        $profileData = $profile->get()->map(function ($item) {
+            $item->target = !empty($item->target) ? (int) $item->target : 0;
+            $item->mtd = !empty($item->mtd) ? (int) $item->mtd : 0;
+            $item->GROWTH = !empty($item->GROWTH) ? round($item->GROWTH, 2) : 0;
+            $item->achievement = !empty($item->achievement) ? round($item->achievement, 2) : 0;
+            $item->URUTAN = !empty($item->URUTAN) ? (int) $item->URUTAN : 0;
+
+            // Format 'mtd_date' dan 'last_update' jika ada
+            $item->mtd_date = !empty($item->mtd_date) ? Carbon::parse($item->mtd_date)->format('d-m-Y') : '00-00-0000';
+            $item->last_update = !empty($item->last_update) ? Carbon::parse($item->last_update)->format('d-m-Y') : '00-00-0000';
+
+            return $item;
+        });
+
+        return $profileData;
+    }
 
     public function reward (Request $request)
     {
