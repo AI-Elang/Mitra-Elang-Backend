@@ -5,7 +5,6 @@ namespace App\Http\Services\Api\V1;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use function Symfony\Component\String\b;
 
 class DashboardService
 {
@@ -134,92 +133,98 @@ class DashboardService
         return array_values($data);
     }
 
+//    public function profile(Request $request)
+//    {
+//        $username = auth('api')->user()->username;
+//        $mcid = auth('api')->user()->territory_id;
+//        $role = auth('api')->user()->role;
+//        $branch = $request->get('branch');
+//        $role_label= auth('api')->user()->role_label;
+//
+//        if ($role_label == "MPC" || $role_label == "3KIOSK" || $role_label == "MITRAIM3") {
+//            $pt_name = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+//                ->select('PARTNER_NAME')
+//                ->where('PARTNER_ID', $username)
+//                ->first())->PARTNER_NAME;
+//        } else if ($role_label == "MP3") {
+//            $pt_name = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+//                ->select('NAMA_PT')
+//                ->where('PARTNER_ID', $username)
+//                ->first())->NAMA_PT;
+//        }
+//
+//        $mc_name = DB::table('territory_dashboards')
+//            ->select('name')
+//            ->where('id', $mcid)
+//            ->first();
+//        $profile = DB::table('elang_mitra_sampah')
+//            ->orderBy('URUTAN'); // Order by 'URUTAN' in ascending order
+//
+//        if ($role == 7) {
+//            $profile->where('MC', $branch)
+//                    ->where('id_mitra', $pt_name);
+//        } else if ($role == 6) {
+//            $profile->where('MC', $mc_name->name)
+//                    ->where('id_mitra', $username);
+//        }
+//
+//// Eksekusi query dan ambil datanya
+//        $profileData = $profile->get()->map(function ($item) {
+//            $item->target = !empty($item->target) ? (int) $item->target : 0;
+//            $item->mtd = !empty($item->mtd) ? (int) $item->mtd : 0;
+//            $item->GROWTH = !empty($item->GROWTH) ? round($item->GROWTH, 2) : 0;
+//            $item->achievement = !empty($item->achievement) ? round($item->achievement, 2) : 0;
+//            $item->URUTAN = !empty($item->URUTAN) ? (int) $item->URUTAN : 0;
+//
+//            // Format 'mtd_date' dan 'last_update' jika ada
+//            $item->mtd_date = !empty($item->mtd_date) ? Carbon::parse($item->mtd_date)->format('d-m-Y') : '00-00-0000';
+//            $item->last_update = !empty($item->last_update) ? Carbon::parse($item->last_update)->format('d-m-Y') : '00-00-0000';
+//
+//            return $item;
+//        });
+//
+//        return $profileData;
+//    }
 
-
-    public function insentif()
+    public function reward (Request $request)
     {
-        $username = auth('api')->user()->username;
-        $mcid = auth('api')->user()->territory_id;
-        $mc_name = DB::table('territory_dashboards')
-            ->select('name')
-            ->where('id', $mcid)
-            ->first();
-        $insentif = DB::table('total_achievement')
-            ->select('item', 'nilai', 'tipe', 'last_update')
-            ->where('id_mitra', $username)
-            ->where('MC', $mc_name->name)
-            ->get()
-            ->map(function ($item) {
-                // Convert 'nilai' based on 'status'
-                if (is_numeric($item->nilai)) {
-                    if (ctype_digit($item->nilai)) {
-                        $item->nilai = (int) $item->nilai; // Convert to integer
-                    } else {
-                        $item->nilai = round($item->nilai,1);// Convert to float
-                    }
-                }
-                if (!empty($item->last_update)) {
-                    $item->last_update = Carbon::parse($item->last_update)->format('d-m-Y');
-                }
-
-                return $item;
-            });
-
-        return $insentif;
-    }
-
-    public function profile(Request $request)
-    {
-        $username = auth('api')->user()->username;
-        $mcid = auth('api')->user()->territory_id;
+        $mcId = auth('api')->user()->territory_id;
         $role = auth('api')->user()->role;
+        $username = auth('api')->user()->username;
         $branch = $request->get('branch');
-        $role_label= auth('api')->user()->role_label;
+        $regionId = $this->getRegionId($mcId);
 
-        if ($role_label == "MPC" || $role_label == "3KIOSK" || $role_label == "MITRAIM3") {
-            $pt_name = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
-                ->select('PARTNER_NAME')
-                ->where('PARTNER_ID', $username)
-                ->first())->PARTNER_NAME;
-        } else if ($role_label == "MP3") {
-            $pt_name = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
-                ->select('NAMA_PT')
-                ->where('PARTNER_ID', $username)
-                ->first())->NAMA_PT;
-        }
+        $parameters = DB::table('payout_parameter as p')
+            ->join('payout_mapping as pm', 'p.id_param', '=', 'pm.id_param')
+            ->select(
+                'p.id_param as parameter_id',
+                'p.nama_param as parameter_name',
+                'p.status_param as parameter_status',
+                'pm.role as role',
+                'pm.is_active as parameter_is_active',
+                'pm.territory_id as territory_id',
+            )
+            ->where('pm.is_active', true)
+            ->where('p.status_param', true)
+            ->where('pm.territory_id', $regionId)
+            ->where('pm.role', $role)
+            ->get();
 
-        $mc_name = DB::table('territory_dashboards')
-            ->select('name')
-            ->where('id', $mcid)
-            ->first();
-        $profile = DB::table('elang_mitra_sampah')
-            ->orderBy('URUTAN'); // Order by 'URUTAN' in ascending order
+        $data = DB::table('payout_data')
+            ->where('status', 'Official Letter & IOM Release')
+            ->whereIn('id_param', $parameters->pluck('parameter_id'))
+            ->where('id_mitra', $username)
+            ->where('branch', $branch)
+            ->get()
+//            ->toRawSql()
+        ;
 
-        if ($role == 7) {
-            $profile->where('MC', $branch)
-                    ->where('id_mitra', $pt_name);
-        } else if ($role == 6) {
-            $profile->where('MC', $mc_name->name)
-                    ->where('id_mitra', $username);
-        }
+//        dd($data);
 
-// Eksekusi query dan ambil datanya
-        $profileData = $profile->get()->map(function ($item) {
-            $item->target = !empty($item->target) ? (int) $item->target : 0;
-            $item->mtd = !empty($item->mtd) ? (int) $item->mtd : 0;
-            $item->GROWTH = !empty($item->GROWTH) ? round($item->GROWTH, 2) : 0;
-            $item->achievement = !empty($item->achievement) ? round($item->achievement, 2) : 0;
-            $item->URUTAN = !empty($item->URUTAN) ? (int) $item->URUTAN : 0;
 
-            // Format 'mtd_date' dan 'last_update' jika ada
-            $item->mtd_date = !empty($item->mtd_date) ? Carbon::parse($item->mtd_date)->format('d-m-Y') : '00-00-0000';
-            $item->last_update = !empty($item->last_update) ? Carbon::parse($item->last_update)->format('d-m-Y') : '00-00-0000';
+        return $data;
 
-            return $item;
-        });
-
-        return $profileData;
-    }
+}
 
         public function sliders($request)
     {

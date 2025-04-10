@@ -31,10 +31,10 @@ class DashboardController extends Controller
         }
     }
 
-    public function insentif()
+    public function reward(Request $request)
     {
         try{
-            $data = $this->service->insentif();
+            $data = $this->service->reward($request);
             return $this->respond([
                 'data' => $data,
                 'meta' => [
