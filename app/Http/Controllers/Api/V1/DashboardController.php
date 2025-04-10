@@ -40,6 +40,23 @@ class DashboardController extends Controller
                 'meta' => [
                     'status_code' => 200,
                     'success' => true,
+                    'message' => 'Success Get Reward',
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return $this->ApiExceptionError($e->getMessage());
+        }
+    }
+
+    public function insentif()
+    {
+        try{
+            $data = $this->service->insentif();
+            return $this->respond([
+                'data' => $data,
+                'meta' => [
+                    'status_code' => 200,
+                    'success' => true,
                     'message' => 'Success Get Insentif',
                 ],
             ]);

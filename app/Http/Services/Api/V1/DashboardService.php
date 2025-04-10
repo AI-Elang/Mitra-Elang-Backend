@@ -226,6 +226,38 @@ class DashboardService
 
 }
 
+    public function insentif()
+    {
+        $username = auth('api')->user()->username;
+        $mcid = auth('api')->user()->territory_id;
+        $mc_name = DB::table('territory_dashboards')
+            ->select('name')
+            ->where('id', $mcid)
+            ->first();
+        $insentif = DB::table('total_achievement')
+            ->select('item', 'nilai', 'tipe', 'last_update')
+            ->where('id_mitra', $username)
+            ->where('MC', $mc_name->name)
+            ->get()
+            ->map(function ($item) {
+                // Convert 'nilai' based on 'status'
+                if (is_numeric($item->nilai)) {
+                    if (ctype_digit($item->nilai)) {
+                        $item->nilai = (int) $item->nilai; // Convert to integer
+                    } else {
+                        $item->nilai = round($item->nilai,1);// Convert to float
+                    }
+                }
+                if (!empty($item->last_update)) {
+                    $item->last_update = Carbon::parse($item->last_update)->format('d-m-Y');
+                }
+
+                return $item;
+            });
+
+        return $insentif;
+    }
+
         public function sliders($request)
     {
         $params = $request->status;
