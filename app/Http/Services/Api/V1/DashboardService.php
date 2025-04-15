@@ -222,6 +222,7 @@ class DashboardService
                 'POIN',
                 'ACH',
                 'URUTAN',
+                'KPI_NAME',
                 'mtd_dt as last_update');
 
         if ($role == 7) {
