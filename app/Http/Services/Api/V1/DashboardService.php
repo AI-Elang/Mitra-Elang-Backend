@@ -223,6 +223,7 @@ class DashboardService
                 'ACH',
                 'URUTAN',
                 'KPI_NAME',
+                'PARTNER_NAME',
                 'mtd_dt as last_update');
 
         if ($role == 7) {
