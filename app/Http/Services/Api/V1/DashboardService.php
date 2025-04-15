@@ -212,17 +212,27 @@ class DashboardService
             ->first();
         $profile = DB::connection('pgsql2')
             ->table('TRADE_PARTNER_SUMMARY')
-            ->orderBy('URUTAN'); // Order by 'URUTAN' in ascending order
+            ->orderBy('URUTAN') // Order by 'URUTAN' in ascending order
+            ->where('STATUS', 'VALID')
+            ->select(
+                'ID_PARTNER',
+                'PARTNER_NAME',
+                'TARGET',
+                'MTD',
+                'POIN',
+                'ACH',
+                'URUTAN',
+                'mtd_dt as last_update');
 
         if ($role == 7) {
             $profile->where('BSM', $branch)
-                ->where('PARTNER_NAME', $pt_name);
+                ->where('PARTNER_NAME', 'like', '%' . $pt_name . '%');
         } else if ($role == 6) {
             $profile->where('MC', $mc_name->name)
                 ->where('ID_PARTNER', $username);
         }
-        $tes = $profile->toRawSql();
-        dd($tes);
+//        $tes = $profile->toRawSql();
+//        dd($tes);
 
 // Eksekusi query dan ambil datanya
         $profileData = $profile->get()->map(function ($item) {
@@ -233,7 +243,7 @@ class DashboardService
             $item->URUTAN = !empty($item->URUTAN) ? (int) $item->URUTAN : 0;
 
             // Format 'mtd_date' dan 'last_update' jika ada
-            $item->last_update = !empty($item->mtd_dt) ? Carbon::parse($item->mtd_date)->format('d-m-Y') : '00-00-0000';
+            $item->last_update = !empty($item->last_update) ? Carbon::parse($item->last_update)->format('d-m-Y') : '00-00-0000';
 
             return $item;
         });
