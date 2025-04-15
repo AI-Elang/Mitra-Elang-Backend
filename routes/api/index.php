@@ -35,6 +35,7 @@ Route::prefix('v1')->group(function () {
 
                 Route::prefix('detail')->group(function () {
                     Route::get('{qr_code}', 'outletDetail');
+                    Route::get('{qr_code}/program', 'outletProgram');
                     Route::get('{qr_code}/ga', 'outletDetailGa');
                     Route::get('{qr_code}/sec', 'outletDetailSec');
                     Route::get('{qr_code}/supply', 'outletDetailSupply');

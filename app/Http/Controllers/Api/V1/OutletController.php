@@ -133,6 +133,25 @@ public function listKecamatanByMc(Request $request)
         }
     }
 
+    public function outletProgram($qrCode)
+    {
+        try{
+            $data = $this->service->outletProgram($qrCode);
+            $result = [
+                'data' => $data,
+                'meta' => [
+                    'status_code' => 200,
+                    'success' => true,
+                    'message' => 'Success get outlet program'
+                ],
+            ];
+
+            return $this->respond($result);
+        } catch (\Exception $e) {
+            return $this->ApiExceptionError($e->getMessage());
+        }
+    }
+
     public function outletDetailGa($qrCode)
     {
         try {

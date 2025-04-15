@@ -214,6 +214,43 @@ public function listKecamatanByMc(Request $request)
         return $data;
     }
 
+    public function outletProgram($qrCode)
+    {
+        if (!$qrCode) {
+            throw new \Exception('QR Code is required', 400);
+        }
+
+        $data = DB::connection('pgsql2')
+            ->table('TRADE_PARTNER_OUTLET')
+            ->selectRaw(
+                'COALESCE("URUTAN", 0) as urutan,
+             COALESCE("KPI_NAME", \'data tidak ada\') as kpi_name,
+             COALESCE("MTD", 0) as mtd,
+             COALESCE("TARGET", 0) as target,
+             COALESCE("ACH", 0) as achievement'
+            )
+            ->where('QR_CODE', $qrCode)
+            ->whereNotNull('URUTAN')
+            ->whereNotNull('KPI_NAME')
+            ->whereNotNull('TARGET')
+            ->whereNotNull('ACH')
+            ->orderBy('URUTAN', 'asc')
+            ->get();
+
+        // Convert achievement to float explicitly
+        $data = $data->map(function ($item) {
+            $item->achievement = (float) $item->achievement;
+            return $item;
+        });
+
+        return $data;
+    }
+
+
+
+
+
+
     public function outletDetailGa($qrCode)
     {
         $qr_code = $qrCode;
