@@ -214,6 +214,7 @@ class DashboardService
             ->table('TRADE_PARTNER_SUMMARY')
             ->orderBy('URUTAN') // Order by 'URUTAN' in ascending order
             ->where('STATUS', 'VALID')
+            ->whereIn('KPI_NAME',['PestaIM3 Poin','FUNtasTRI Poin'])
             ->select(
                 'ID_PARTNER',
                 'PARTNER_NAME',

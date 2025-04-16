@@ -253,11 +253,6 @@ public function listKecamatanByMc(Request $request)
         return $data;
     }
 
-
-
-
-
-
     public function outletDetailGa($qrCode)
     {
         $qr_code = $qrCode;
