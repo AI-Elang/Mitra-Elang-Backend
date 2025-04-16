@@ -237,6 +237,10 @@ public function listKecamatanByMc(Request $request)
             ->orderBy('URUTAN', 'asc')
             ->get();
 
+        if ($data->isEmpty()) {
+            return 'data not found';
+        }
+
         // Convert achievement to float explicitly
         $data = $data->map(function ($item) {
             $item->achievement = (float) $item->achievement;
