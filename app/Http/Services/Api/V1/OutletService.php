@@ -244,6 +244,9 @@ public function listKecamatanByMc(Request $request)
         // Convert achievement to float explicitly
         $data = $data->map(function ($item) {
             $item->achievement = (float) $item->achievement;
+            $item->mtd = (int) $item->mtd;
+            $item->target = (int) $item->target;
+            $item->achievement = (int) $item->achievement;
             return $item;
         });
 
@@ -267,13 +270,13 @@ public function listKecamatanByMc(Request $request)
             ->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
             ->selectRaw(
                 '"QR_CODE" as qr_code,
-                "NAMA_TOKO" as outlet_name,
-                ga_lmtd,
-                ga_mtd,
-                q_sso_lmtd,
-                q_sso_mtd,
-                q_uro_lmtd,
-                q_uro_mtd'
+            "NAMA_TOKO" as outlet_name,
+            ga_lmtd,
+            ga_mtd,
+            q_sso_lmtd,
+            q_sso_mtd,
+            q_uro_lmtd,
+            q_uro_mtd'
             )
             ->where('QR_CODE', $qr_code)
             ->where('STATUS', 'VALID')
@@ -285,14 +288,21 @@ public function listKecamatanByMc(Request $request)
 
         $data = collect($data);
 
-        // Add each growth value of the lmtd and mtd using the equation ((mtd/lmtd) - 1) * 100
-        // Check if whether the equation is applicable or not (avoid division by zero, except when mtd is also zero)
+        // Hitung pertumbuhan dan konversi ke integer
         $data['ga_growth'] = $data['ga_lmtd'] == 0 ? 0 :
-            round((($data['ga_mtd'] / $data['ga_lmtd']) - 1) * 100, 2);
+            (int) round((($data['ga_mtd'] / $data['ga_lmtd']) - 1) * 100);
         $data['q_sso_growth'] = $data['q_sso_lmtd'] == 0 ? 0 :
-            round((($data['q_sso_mtd'] / $data['q_sso_lmtd']) - 1) * 100, 2);
+            (int) round((($data['q_sso_mtd'] / $data['q_sso_lmtd']) - 1) * 100);
         $data['q_uro_growth'] = $data['q_uro_lmtd'] == 0 ? 0 :
-            round((($data['q_uro_mtd'] / $data['q_uro_lmtd']) - 1) * 100, 2);
+            (int) round((($data['q_uro_mtd'] / $data['q_uro_lmtd']) - 1) * 100);
+
+        // Konversi semua nilai numerik ke integer, kecuali qr_code dan outlet_name
+        $data['ga_lmtd'] = (int) $data['ga_lmtd'];
+        $data['ga_mtd'] = (int) $data['ga_mtd'];
+        $data['q_sso_lmtd'] = (int) $data['q_sso_lmtd'];
+        $data['q_sso_mtd'] = (int) $data['q_sso_mtd'];
+        $data['q_uro_lmtd'] = (int) $data['q_uro_lmtd'];
+        $data['q_uro_mtd'] = (int) $data['q_uro_mtd'];
 
         // Atur urutan key
         $orderedKeys = [
@@ -316,6 +326,7 @@ public function listKecamatanByMc(Request $request)
         return $data;
     }
 
+
     public function outletDetailSec($qrCode)
     {
         $qr_code = $qrCode;
@@ -328,11 +339,11 @@ public function listKecamatanByMc(Request $request)
             ->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
             ->selectRaw(
                 '"QR_CODE" as qr_code,
-                "NAMA_TOKO" as outlet_name,
-                sec_sp_hits_lmtd,
-                sec_sp_hits_mtd,
-                sec_vou_hits_lmtd,
-                sec_vou_hits_mtd'
+            "NAMA_TOKO" as outlet_name,
+            sec_sp_hits_lmtd,
+            sec_sp_hits_mtd,
+            sec_vou_hits_lmtd,
+            sec_vou_hits_mtd'
             )
             ->where('QR_CODE', $qr_code)
             ->where('STATUS', 'VALID')
@@ -344,12 +355,17 @@ public function listKecamatanByMc(Request $request)
 
         $data = collect($data);
 
-        // Add each growth value of the lmtd and mtd using the equation ((mtd/lmtd) - 1) * 100
-        // Check if whether the equation is applicable or not (avoid division by zero, except when mtd is also zero)
+        // Hitung pertumbuhan dan konversi ke integer
         $data['sec_sp_hits_growth'] = $data['sec_sp_hits_lmtd'] == 0 ? 0 :
-            round((($data['sec_sp_hits_mtd'] / $data['sec_sp_hits_lmtd']) - 1) * 100, 2);
+            (int) round((($data['sec_sp_hits_mtd'] / $data['sec_sp_hits_lmtd']) - 1) * 100);
         $data['sec_vou_hits_growth'] = $data['sec_vou_hits_lmtd'] == 0 ? 0 :
-            round((($data['sec_vou_hits_mtd'] / $data['sec_vou_hits_lmtd']) - 1) * 100, 2);
+            (int) round((($data['sec_vou_hits_mtd'] / $data['sec_vou_hits_lmtd']) - 1) * 100);
+
+        // Konversi semua nilai numerik ke integer, kecuali qr_code dan outlet_name
+        $data['sec_sp_hits_lmtd'] = (int) $data['sec_sp_hits_lmtd'];
+        $data['sec_sp_hits_mtd'] = (int) $data['sec_sp_hits_mtd'];
+        $data['sec_vou_hits_lmtd'] = (int) $data['sec_vou_hits_lmtd'];
+        $data['sec_vou_hits_mtd'] = (int) $data['sec_vou_hits_mtd'];
 
         // Atur urutan key
         $orderedKeys = [
@@ -370,6 +386,7 @@ public function listKecamatanByMc(Request $request)
         return $data;
     }
 
+
     public function outletDetailSupply($qrCode)
     {
         $qr_code = $qrCode;
@@ -382,11 +399,11 @@ public function listKecamatanByMc(Request $request)
             ->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
             ->selectRaw(
                 '"QR_CODE" as qr_code,
-                "NAMA_TOKO" as outlet_name,
-                supply_sp_lmtd,
-                supply_sp_mtd,
-                supply_vo_lmtd,
-                supply_vo_mtd',
+            "NAMA_TOKO" as outlet_name,
+            supply_sp_lmtd,
+            supply_sp_mtd,
+            supply_vo_lmtd,
+            supply_vo_mtd'
             )
             ->where('QR_CODE', $qr_code)
             ->where('STATUS', 'VALID')
@@ -398,12 +415,17 @@ public function listKecamatanByMc(Request $request)
 
         $data = collect($data);
 
-        // Add each growth value of the lmtd and mtd using the equation ((mtd/lmtd) - 1) * 100
-        // Check if whether the equation is applicable or not (avoid division by zero, except when mtd is also zero)
+        // Hitung growth dan konversi ke integer
         $data['supply_sp_growth'] = $data['supply_sp_lmtd'] == 0 ? 0 :
-            round((($data['supply_sp_mtd'] / $data['supply_sp_lmtd']) - 1) * 100, 2);
+            (int) round((($data['supply_sp_mtd'] / $data['supply_sp_lmtd']) - 1) * 100);
         $data['supply_vo_growth'] = $data['supply_vo_lmtd'] == 0 ? 0 :
-            round((($data['supply_vo_mtd'] / $data['supply_vo_lmtd']) - 1) * 100, 2);
+            (int) round((($data['supply_vo_mtd'] / $data['supply_vo_lmtd']) - 1) * 100);
+
+        // Konversi nilai numerik ke integer
+        $data['supply_sp_lmtd'] = (int) $data['supply_sp_lmtd'];
+        $data['supply_sp_mtd'] = (int) $data['supply_sp_mtd'];
+        $data['supply_vo_lmtd'] = (int) $data['supply_vo_lmtd'];
+        $data['supply_vo_mtd'] = (int) $data['supply_vo_mtd'];
 
         // Atur urutan key
         $orderedKeys = [
@@ -424,6 +446,7 @@ public function listKecamatanByMc(Request $request)
         return $data;
     }
 
+
     public function outletDetailDemand($qrCode)
     {
         $qr_code = $qrCode;
@@ -436,11 +459,11 @@ public function listKecamatanByMc(Request $request)
             ->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
             ->selectRaw(
                 '"QR_CODE" as qr_code,
-                "NAMA_TOKO" as outlet_name,
-                tert_sp_lmtd,
-                tert_sp_mtd,
-                tert_vo_lmtd,
-                tert_vo_mtd',
+            "NAMA_TOKO" as outlet_name,
+            tert_sp_lmtd,
+            tert_sp_mtd,
+            tert_vo_lmtd,
+            tert_vo_mtd'
             )
             ->where('QR_CODE', $qr_code)
             ->where('STATUS', 'VALID')
@@ -452,12 +475,17 @@ public function listKecamatanByMc(Request $request)
 
         $data = collect($data);
 
-        // Add each growth value of the lmtd and mtd using the equation ((mtd/lmtd) - 1) * 100
-        // Check if whether the equation is applicable or not (avoid division by zero, except when mtd is also zero)
+        // Hitung growth dan konversi ke integer
         $data['tert_sp_growth'] = $data['tert_sp_lmtd'] == 0 ? 0 :
-            round((($data['tert_sp_mtd'] / $data['tert_sp_lmtd']) - 1) * 100, 2);
+            (int) round((($data['tert_sp_mtd'] / $data['tert_sp_lmtd']) - 1) * 100);
         $data['tert_vo_growth'] = $data['tert_vo_lmtd'] == 0 ? 0 :
-            round((($data['tert_vo_mtd'] / $data['tert_vo_lmtd']) - 1) * 100, 2);
+            (int) round((($data['tert_vo_mtd'] / $data['tert_vo_lmtd']) - 1) * 100);
+
+        // Konversi semua nilai numerik ke integer
+        $data['tert_sp_lmtd'] = (int) $data['tert_sp_lmtd'];
+        $data['tert_sp_mtd'] = (int) $data['tert_sp_mtd'];
+        $data['tert_vo_lmtd'] = (int) $data['tert_vo_lmtd'];
+        $data['tert_vo_mtd'] = (int) $data['tert_vo_mtd'];
 
         // Atur urutan key
         $orderedKeys = [
@@ -477,6 +505,7 @@ public function listKecamatanByMc(Request $request)
 
         return $data;
     }
+
 
     public function listOutletLocation()
     {
