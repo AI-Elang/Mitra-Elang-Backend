@@ -226,6 +226,7 @@ class DashboardService
                 'KPI_NAME',
                 'PARTNER_NAME',
                 'VIEW',
+                'MC',
                 'mtd_dt as last_update');
 
         if ($role == 7) {
