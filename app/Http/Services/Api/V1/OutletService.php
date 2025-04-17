@@ -259,7 +259,7 @@ public function listKecamatanByMc(Request $request)
              COALESCE("KPI_NAME", \'data tidak ada\') as kpi_name,
              COALESCE(CAST("MTD" AS INTEGER), 0) as mtd,
              COALESCE(CAST("TARGET" AS INTEGER), 0) as target,
-             COALESCE(CAST("ACH" AS INTEGER), 0) as achievement'
+             COALESCE(CAST("ACH" AS FLOAT), 0) as achievement'
             )
             ->where('QR_CODE', $qrCode)
             ->whereNotNull('URUTAN')
