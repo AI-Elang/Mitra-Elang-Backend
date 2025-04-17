@@ -62,10 +62,10 @@ class OutletService
             ->where('ioh.STATUS', 'VALID')
             ->whereNotNull('ioh.NAMA_TOKO')
             ->whereNotNull('ioh.CATEGORY')
-            ->whereIn('trade.KPI_NAME', [
-                'PestaIM3 Poin',
-                'FUNtasTRI Poin',
-            ])
+//            ->whereIn('trade.KPI_NAME', [
+//                'PestaIM3 Poin',
+//                'FUNtasTRI Poin',
+//            ])
             ->where('ioh.KEC_BRANCHH', $kecamatan)
 //            ->toRawSql()
             ->get()
