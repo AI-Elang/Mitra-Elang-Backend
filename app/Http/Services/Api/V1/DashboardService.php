@@ -192,69 +192,77 @@ class DashboardService
         $mcid = auth('api')->user()->territory_id;
         $role = auth('api')->user()->role;
         $branch = $request->get('branch');
-        $role_label= auth('api')->user()->role_label;
+        $role_label = auth('api')->user()->role_label;
 
-        if ($role_label == "MPC" || $role_label == "3KIOSK" || $role_label == "MITRAIM3") {
-            $pt_name = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+        // Ambil nama partner berdasarkan role
+        if (in_array($role_label, ["MPC", "3KIOSK", "MITRAIM3"])) {
+            $pt_name = optional(DB::connection('pgsql2')
+                ->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
                 ->select('PARTNER_NAME')
                 ->where('PARTNER_ID', $username)
                 ->first())->PARTNER_NAME;
-        } else if ($role_label == "MP3") {
-            $pt_name = optional(DB::connection('pgsql2')->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
+        } else if ($role_label === "MP3") {
+            $pt_name = optional(DB::connection('pgsql2')
+                ->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
                 ->select('NAMA_PT')
                 ->where('PARTNER_ID', $username)
                 ->first())->NAMA_PT;
         }
 
+        // Ambil nama MC berdasarkan ID
         $mc_name = DB::table('territory_dashboards')
             ->select('name')
             ->where('id', $mcid)
             ->first();
+
+        // Base query
         $profile = DB::connection('pgsql2')
             ->table('TRADE_PARTNER_SUMMARY')
-            ->orderBy('URUTAN') // Order by 'URUTAN' in ascending order
-//            ->whereIn('KPI_NAME',['PestaIM3 Poin','FUNtasTRI Poin'])
-            ->where('VIEW','1')
-            ->select(
-                'ID_PARTNER',
-                'PARTNER_NAME',
-                'TARGET',
-                'MTD',
-                'POIN',
-                'ACH',
-                'URUTAN',
-                'KPI_NAME',
-                'PARTNER_NAME',
-                'VIEW',
-                'MC',
-                'mtd_dt as last_update');
+            ->orderBy('URUTAN')
+            ->where('VIEW', '1')
+            ->when($role == 7, function ($query) use ($branch, $pt_name) {
+                return $query->where('BSM', $branch)
+                    ->where('PARTNER_NAME', 'like', '%' . $pt_name . '%');
+            })
+            ->when($role == 6, function ($query) use ($mc_name, $username) {
+                return $query->where('MC', $mc_name->name)
+                    ->where('ID_PARTNER', $username);
+            })
+            ->selectRaw('
+        "URUTAN",
+        "KPI_NAME",
+        mtd_dt as last_update,
+        SUM("TARGET") as target,
+        SUM("POIN") as poin,
+        SUM("MTD") as mtd
+    ')
+            ->groupBy('KPI_NAME', 'URUTAN', 'mtd_dt')
+            ->get()
+            ->map(function ($item) {
+                $target = (int) ($item->target ?? 0);
+                $mtd = (int) ($item->mtd ?? 0);
+                $poin = (int) ($item->poin ?? 0);
 
-        if ($role == 7) {
-            $profile->where('BSM', $branch)
-                ->where('PARTNER_NAME', 'like', '%' . $pt_name . '%');
-        } else if ($role == 6) {
-            $profile->where('MC', $mc_name->name)
-                ->where('ID_PARTNER', $username);
-        }
-//        $tes = $profile->toRawSql();
-//        dd($tes);
+                $achv = $target != 0 ? round($mtd / $target, 2) : 0;
 
-// Eksekusi query dan ambil datanya
-        $profileData = $profile->get()->map(function ($item) {
-            $item->target = !empty($item->TARGET) ? (int) $item->TARGET : 0;
-            $item->MTD = !empty($item->MTD) ? (int) $item->MTD : 0;
-            $item->POIN = !empty($item->POIN) ? round($item->POIN, 2) : 0;
-            $item->ACH = !empty($item->ACH) ? round($item->ACH, 2) : 0;
-            $item->URUTAN = !empty($item->URUTAN) ? (int) $item->URUTAN : 0;
+                return [
+                    'URUTAN'      => $item->URUTAN ?? 0,
+                    'KPI_NAME'    => $item->KPI_NAME,
+                    'last_update' => !empty($item->last_update)
+                        ? Carbon::parse($item->last_update)->format('d-m-Y')
+                        : '00-00-0000',
+                    'target' => $target,
+                    'poin'   => $poin,
+                    'mtd'    => $mtd,
+                    'achv'   => $achv,
+                ];
+            });
 
-            // Format 'mtd_date' dan 'last_update' jika ada
-            $item->last_update = !empty($item->last_update) ? Carbon::parse($item->last_update)->format('d-m-Y') : '00-00-0000';
+        return $profile;
 
-            return $item;
-        });
-
-        return $profileData;
     }
+
+
 
     public function reward (Request $request)
     {
