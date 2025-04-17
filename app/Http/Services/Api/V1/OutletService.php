@@ -38,38 +38,54 @@ class OutletService
         }
 
         if ($role_label == "MPC" || $role_label == "3KIOSK" || $role_label == "MITRAIM3") {
+            if($role_label == "3KIOSK") {
+                $qrFilter = "QR_RAPI";
+            }
+            else {
+                $qrFilter = "QR_CODE";
+            }
             $ptfilter = "PARTNER_NAME";
         } else if ($role_label == "MP3") {
             $ptfilter = "NAMA_PT";
+            $qrFilter = "QR_CODE";
         }
+
+//        $qrFilter = 'QR_CODE'; // atau 'DSE_CODE', dll
+
+// SQL untuk SELECT
+        $sql = sprintf('
+            ioh."%s" AS qr_code,
+            ioh."NAMA_TOKO" AS outlet_name,
+            ioh."NAMA_PT" AS partner_name,
+            ioh."CATEGORY" AS category,
+            ioh."brand",
+            ioh."STATUS" AS status,
+            ioh."longitude",
+            ioh."latitude",
+            CASE
+                WHEN trade."KPI_NAME" IN (\'PestaIM3 Poin\', \'FUNtasTRI Poin\')
+                THEN LEFT(trade."KPI_NAME", LENGTH(trade."KPI_NAME") - 5)
+                ELSE NULL
+            END AS program
+        ', $qrFilter);
+
+// Join key (tanpa kutip dua agar Laravel escape otomatis)
+        $iohJoinCol = 'ioh.' . $qrFilter;
 
         $data = DB::connection('pgsql2')
             ->table('IOH_OUTLET_BULAN_INI_RAPI_KEC as ioh')
-            ->leftJoin('TRADE_PARTNER_OUTLET as trade', 'ioh.QR_CODE', '=', 'trade.QR_CODE')
-            ->selectRaw('
-                ioh."QR_CODE" AS qr_code,
-                ioh."NAMA_TOKO" AS outlet_name,
-                ioh."NAMA_PT" AS partner_name,
-                ioh."CATEGORY" AS category,
-                ioh."brand",
-                ioh."STATUS" AS status,
-                ioh."longitude",
-                ioh."latitude",
-                LEFT(trade."KPI_NAME", LENGTH(trade."KPI_NAME") - 5) AS program
-            ')
+            ->leftJoin('TRADE_PARTNER_OUTLET as trade', $iohJoinCol, '=', 'trade.QR_CODE')
+            ->selectRaw($sql)
             ->where($ptfilter, 'like', '%' . $partner_name . '%')
             ->where('ioh.brand', $brand)
             ->where('ioh.STATUS', 'VALID')
             ->whereNotNull('ioh.NAMA_TOKO')
             ->whereNotNull('ioh.CATEGORY')
-//            ->whereIn('trade.KPI_NAME', [
-//                'PestaIM3 Poin',
-//                'FUNtasTRI Poin',
-//            ])
             ->where('ioh.KEC_BRANCHH', $kecamatan)
 //            ->toRawSql()
             ->get()
         ;
+
 
 //        dd($data);
 
