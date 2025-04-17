@@ -44,25 +44,31 @@ class OutletService
         }
 
         $data = DB::connection('pgsql2')
-            ->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
-            ->selectRaw(
-                '"QR_CODE" as qr_code,
-                "NAMA_TOKO" as outlet_name,
-                "NAMA_PT" as partner_name,
-                "CATEGORY" as category,
-                brand,
-                "STATUS" as status,
-                longitude,
-                latitude'
-            )
-            ->where($ptfilter,   'like', '%' . $partner_name . '%')
-            ->where('brand', $brand)
-            ->where('STATUS', 'VALID')
-            ->whereNotNull('NAMA_TOKO')
-            ->whereNotNull('CATEGORY')
-            ->where('KEC_BRANCHH', $kecamatan)
-            ->get()
-        ;
+            ->table('IOH_OUTLET_BULAN_INI_RAPI_KEC as ioh')
+            ->leftJoin('TRADE_PARTNER_OUTLET as trade', 'ioh.QR_CODE', '=', 'trade.QR_CODE')
+            ->selectRaw('
+                ioh."QR_CODE" AS qr_code,
+                ioh."NAMA_TOKO" AS outlet_name,
+                ioh."NAMA_PT" AS partner_name,
+                ioh."CATEGORY" AS category,
+                ioh."brand",
+                ioh."STATUS" AS status,
+                ioh."longitude",
+                ioh."latitude",
+                LEFT(trade."KPI_NAME", LENGTH(trade."KPI_NAME") - 5) AS program
+            ')
+            ->where($ptfilter, 'like', '%' . $partner_name . '%')
+            ->where('ioh.brand', $brand)
+            ->where('ioh.STATUS', 'VALID')
+            ->whereNotNull('ioh.NAMA_TOKO')
+            ->whereNotNull('ioh.CATEGORY')
+            ->whereIn('trade.KPI_NAME', [
+                'PestaIM3 Poin',
+                'FUNtasTRI Poin',
+            ])
+            ->orWhereNull('trade.KPI_NAME')
+            ->where('ioh.KEC_BRANCHH', $kecamatan)
+            ->get();
 
         return $data;
     }
