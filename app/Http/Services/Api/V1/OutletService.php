@@ -223,17 +223,17 @@ public function listKecamatanByMc(Request $request)
         $data = DB::connection('pgsql2')
             ->table('TRADE_PARTNER_OUTLET')
             ->selectRaw(
-                'COALESCE("URUTAN", 0) as urutan,
+                'COALESCE(CAST("URUTAN" AS INTEGER), 0) as urutan,
              COALESCE("KPI_NAME", \'data tidak ada\') as kpi_name,
-             COALESCE("MTD", 0) as mtd,
-             COALESCE("TARGET", 0) as target,
-             COALESCE("ACH", 0) as achievement'
+             COALESCE(CAST("MTD" AS INTEGER), 0) as mtd,
+             COALESCE(CAST("TARGET" AS INTEGER), 0) as target,
+             COALESCE(CAST("ACH" AS INTEGER), 0) as achievement'
             )
             ->where('QR_CODE', $qrCode)
             ->whereNotNull('URUTAN')
             ->whereNotNull('KPI_NAME')
-            ->whereNotNull('TARGET')
-            ->whereNotNull('ACH')
+//            ->whereNotNull('TARGET')
+//            ->whereNotNull('ACH')
             ->orderBy('URUTAN', 'asc')
             ->get();
 
@@ -241,17 +241,17 @@ public function listKecamatanByMc(Request $request)
             return 'data not found';
         }
 
-        // Convert achievement to float explicitly
+        // Convert achievement to float if needed
         $data = $data->map(function ($item) {
-            $item->achievement = (float) $item->achievement;
+            $item->achievement = (int) $item->achievement;
             $item->mtd = (int) $item->mtd;
             $item->target = (int) $item->target;
-            $item->achievement = (int) $item->achievement;
             return $item;
         });
 
         return $data;
     }
+
 
     public function outletDetailGa($qrCode)
     {
