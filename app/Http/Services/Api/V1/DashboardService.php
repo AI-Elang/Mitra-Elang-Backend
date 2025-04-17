@@ -391,12 +391,13 @@ class DashboardService
             ;
         ;
 
-        if ($roleLabel == 'MITRAIM3') {
-            $nama_ptfilter = $username;
-        }
-        else {
-            $nama_ptfilter = $nama_pt->nama_mitra;
-        }
+//        if ($roleLabel == 'MITRAIM3') {
+//            $nama_ptfilter = $username;
+//        }
+//        else {
+//            $nama_ptfilter = $nama_pt->nama_mitra;
+//        }
+        $nama_ptfilter = $nama_pt->nama_mitra;
 
 
 
@@ -437,6 +438,8 @@ class DashboardService
             DB::raw('COALESCE("ADD SITE", 0) as site_count'),
             DB::raw('COALESCE("QR_CODE", 0) as outlet_count')
         )->get();
+//        )->toRawSql();
+//        dd($siteList);
 
         $maxData = $siteList->sortByDesc(function($item) {
             return max($item->site_count, $item->outlet_count);

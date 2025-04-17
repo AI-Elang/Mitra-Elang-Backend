@@ -66,9 +66,12 @@ class OutletService
                 'PestaIM3 Poin',
                 'FUNtasTRI Poin',
             ])
-            ->orWhereNull('trade.KPI_NAME')
             ->where('ioh.KEC_BRANCHH', $kecamatan)
-            ->get();
+//            ->toRawSql()
+            ->get()
+        ;
+
+//        dd($data);
 
         return $data;
     }
