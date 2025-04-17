@@ -213,8 +213,8 @@ class DashboardService
         $profile = DB::connection('pgsql2')
             ->table('TRADE_PARTNER_SUMMARY')
             ->orderBy('URUTAN') // Order by 'URUTAN' in ascending order
-            ->where('STATUS', 'VALID')
-            ->whereIn('KPI_NAME',['PestaIM3 Poin','FUNtasTRI Poin'])
+//            ->whereIn('KPI_NAME',['PestaIM3 Poin','FUNtasTRI Poin'])
+            ->where('VIEW','1')
             ->select(
                 'ID_PARTNER',
                 'PARTNER_NAME',
@@ -225,6 +225,7 @@ class DashboardService
                 'URUTAN',
                 'KPI_NAME',
                 'PARTNER_NAME',
+                'VIEW',
                 'mtd_dt as last_update');
 
         if ($role == 7) {

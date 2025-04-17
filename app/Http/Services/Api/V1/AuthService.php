@@ -49,7 +49,14 @@ class AuthService
 
             if ($user->role_label == 'MITRAIM3') {
                 $filtervalue = 'MC';
-                $nama_mitra = $request->username;
+//                $nama_mitra = $request->username;
+                $nama_mitra = DB::connection('pgsql')->table('mitra_table')
+                    ->select('id_mitra',
+                        'nama_mitra')
+                    ->where('is_active', true)
+                    ->where('id_mitra', $request->username)
+                    ->first()
+                    ->nama_mitra; // Ambil satu baris data
             }
             else {
                 if ($user->role_label == '3KIOSK')
