@@ -47,7 +47,7 @@ class OutletService
             $ptfilter = "PARTNER_NAME";
         } else if ($role_label == "MP3") {
             $ptfilter = "NAMA_PT";
-            $qrFilter = "QR_CODE";
+            $qrFilter = "QR_RAPI";
         }
 
 //        $qrFilter = 'QR_CODE'; // atau 'DSE_CODE', dll
@@ -69,7 +69,6 @@ class OutletService
             END AS program
         ', $qrFilter);
 
-// Join key (tanpa kutip dua agar Laravel escape otomatis)
         $iohJoinCol = 'ioh.' . $qrFilter;
 
         $data = DB::connection('pgsql2')
@@ -85,8 +84,6 @@ class OutletService
 //            ->toRawSql()
             ->get()
         ;
-
-
 //        dd($data);
 
         return $data;
