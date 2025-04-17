@@ -204,29 +204,39 @@ public function listKecamatanByMc(Request $request)
     public function outletDetail($qrCode)
     {
         $qr_code = $qrCode;
+        $brand = auth('api')->user()->brand;
 
         if (!$qr_code) {
             throw new \Exception('QR Code is required', 400);
         }
 
+        if ($brand == "3ID") {
+            $qrFilter = "QR_RAPI";
+        } else {
+            $qrFilter = "QR_CODE";
+        }
+
         $data = DB::connection('pgsql2')
             ->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
             ->selectRaw(
-                '"QR_CODE" as qr_code,
+                "\"$qrFilter\" as qr_code,
                 site_id,
-                "NAMA_TOKO" as outlet_name,
-                "PARTNER_NAME" as partner_name,
-                "CATEGORY" as category,
+                \"NAMA_TOKO\" as outlet_name,
+                \"PARTNER_NAME\" as partner_name,
+                \"CATEGORY\" as category,
                 brand,
                 latitude,
                 longitude,
-                to_char(mtd_dt, \'DD-MM-YYYY\') as mtd_dt,
-                "STATUS" as status'
+                to_char(mtd_dt, 'DD-MM-YYYY') as mtd_dt,
+                \"STATUS\" as status"
             )
-
-            ->where('QR_CODE', $qr_code)
+            ->where($qrFilter, $qr_code)
             ->where('STATUS', 'VALID')
-            ->first();
+//            ->toRawSql()
+            ->first()
+        ;
+
+//        dd($data);
 
 
         if (!$data) {
@@ -277,6 +287,13 @@ public function listKecamatanByMc(Request $request)
 
     public function outletDetailGa($qrCode)
     {
+        $brand = auth('api')->user()->brand;
+        if ($brand == "3ID") {
+            $qrFilter = "QR_RAPI";
+        } else {
+            $qrFilter = "QR_CODE";
+        }
+
         $qr_code = $qrCode;
 
         if (!$qr_code) {
@@ -286,18 +303,19 @@ public function listKecamatanByMc(Request $request)
         $data = DB::connection('pgsql2')
             ->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
             ->selectRaw(
-                '"QR_CODE" as qr_code,
-            "NAMA_TOKO" as outlet_name,
-            ga_lmtd,
-            ga_mtd,
-            q_sso_lmtd,
-            q_sso_mtd,
-            q_uro_lmtd,
-            q_uro_mtd'
+                "\"$qrFilter\" as qr_code,
+                \"NAMA_TOKO\" as outlet_name,
+                ga_lmtd,
+                ga_mtd,
+                q_sso_lmtd,
+                q_sso_mtd,
+                q_uro_lmtd,
+                q_uro_mtd"
             )
-            ->where('QR_CODE', $qr_code)
+            ->where($qrFilter, $qr_code)
             ->where('STATUS', 'VALID')
             ->first();
+
 
         if (!$data) {
             throw new \Exception('Data not found', 404);
@@ -348,6 +366,18 @@ public function listKecamatanByMc(Request $request)
     {
         $qr_code = $qrCode;
 
+        $brand = auth('api')->user()->brand;
+
+        if (!$qr_code) {
+            throw new \Exception('QR Code is required', 400);
+        }
+
+        if ($brand == "3ID") {
+            $qrFilter = "QR_RAPI";
+        } else {
+            $qrFilter = "QR_CODE";
+        }
+
         if (!$qr_code) {
             throw new \Exception('QR Code is required', 400);
         }
@@ -355,16 +385,17 @@ public function listKecamatanByMc(Request $request)
         $data = DB::connection('pgsql2')
             ->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
             ->selectRaw(
-                '"QR_CODE" as qr_code,
-            "NAMA_TOKO" as outlet_name,
-            sec_sp_hits_lmtd,
-            sec_sp_hits_mtd,
-            sec_vou_hits_lmtd,
-            sec_vou_hits_mtd'
+                "\"$qrFilter\" as qr_code,
+                \"NAMA_TOKO\" as outlet_name,
+                sec_sp_hits_lmtd,
+                sec_sp_hits_mtd,
+                sec_vou_hits_lmtd,
+                sec_vou_hits_mtd"
             )
-            ->where('QR_CODE', $qr_code)
+            ->where($qrFilter, $qr_code)
             ->where('STATUS', 'VALID')
             ->first();
+
 
         if (!$data) {
             throw new \Exception('Data not found', 404);
@@ -406,7 +437,19 @@ public function listKecamatanByMc(Request $request)
 
     public function outletDetailSupply($qrCode)
     {
+        $brand = auth('api')->user()->brand;
+
+        if ($brand == "3ID") {
+            $qrFilter = "QR_RAPI";
+        } else {
+            $qrFilter = "QR_CODE";
+        }
+
         $qr_code = $qrCode;
+
+        if (!$qr_code) {
+            throw new \Exception('QR Code is required', 400);
+        }
 
         if (!$qr_code) {
             throw new \Exception('QR Code is required', 400);
@@ -415,16 +458,17 @@ public function listKecamatanByMc(Request $request)
         $data = DB::connection('pgsql2')
             ->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
             ->selectRaw(
-                '"QR_CODE" as qr_code,
-            "NAMA_TOKO" as outlet_name,
-            supply_sp_lmtd,
-            supply_sp_mtd,
-            supply_vo_lmtd,
-            supply_vo_mtd'
+                "\"$qrFilter\" as qr_code,
+                \"NAMA_TOKO\" as outlet_name,
+                supply_sp_lmtd,
+                supply_sp_mtd,
+                supply_vo_lmtd,
+                supply_vo_mtd"
             )
-            ->where('QR_CODE', $qr_code)
+            ->where($qrFilter, $qr_code)
             ->where('STATUS', 'VALID')
             ->first();
+
 
         if (!$data) {
             throw new \Exception('Data not found', 404);
@@ -468,6 +512,18 @@ public function listKecamatanByMc(Request $request)
     {
         $qr_code = $qrCode;
 
+        $brand = auth('api')->user()->brand;
+
+        if (!$qr_code) {
+            throw new \Exception('QR Code is required', 400);
+        }
+
+        if ($brand == "3ID") {
+            $qrFilter = "QR_RAPI";
+        } else {
+            $qrFilter = "QR_CODE";
+        }
+
         if (!$qr_code) {
             throw new \Exception('QR Code is required', 400);
         }
@@ -475,16 +531,17 @@ public function listKecamatanByMc(Request $request)
         $data = DB::connection('pgsql2')
             ->table('IOH_OUTLET_BULAN_INI_RAPI_KEC')
             ->selectRaw(
-                '"QR_CODE" as qr_code,
-            "NAMA_TOKO" as outlet_name,
-            tert_sp_lmtd,
-            tert_sp_mtd,
-            tert_vo_lmtd,
-            tert_vo_mtd'
+                "\"$qrFilter\" as qr_code,
+                \"NAMA_TOKO\" as outlet_name,
+                tert_sp_lmtd,
+                tert_sp_mtd,
+                tert_vo_lmtd,
+                tert_vo_mtd"
             )
-            ->where('QR_CODE', $qr_code)
+            ->where($qrFilter, $qr_code)
             ->where('STATUS', 'VALID')
             ->first();
+
 
         if (!$data) {
             throw new \Exception('Data not found', 404);
