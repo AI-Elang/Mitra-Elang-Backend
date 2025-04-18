@@ -256,10 +256,11 @@ public function listKecamatanByMc(Request $request)
             ->table('TRADE_PARTNER_OUTLET')
             ->selectRaw(
                 'COALESCE(CAST("URUTAN" AS INTEGER), 0) as urutan,
-             COALESCE("KPI_NAME", \'data tidak ada\') as kpi_name,
-             COALESCE(CAST("MTD" AS INTEGER), 0) as mtd,
-             COALESCE(CAST("TARGET" AS INTEGER), 0) as target,
-             COALESCE(CAST("ACH" AS FLOAT), 0) as achievement'
+                COALESCE("KPI_NAME", \'data tidak ada\') as kpi_name,
+                COALESCE(CAST("MTD" AS INTEGER), 0) as mtd,
+                COALESCE(CAST("TARGET" AS INTEGER), 0) as target,
+                COALESCE(CAST("ACH" AS FLOAT), 0) as achievement,
+                COALESCE(CAST("POIN" AS INTEGER), 0) as poin'
             )
             ->where('QR_CODE', $qrCode)
             ->whereNotNull('URUTAN')
