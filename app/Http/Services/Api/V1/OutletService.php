@@ -81,9 +81,12 @@ class OutletService
             ->whereNotNull('ioh.NAMA_TOKO')
             ->whereNotNull('ioh.CATEGORY')
             ->where('ioh.KEC_BRANCHH', $kecamatan)
-//            ->toRawSql()
-            ->get()
-        ;
+            ->where(function($query) {
+                $query->where('trade.VIEW', '=', '1')
+                    ->orWhereNull('trade.VIEW');
+            })
+            ->get();
+
 //        dd($data);
 
         return $data;
