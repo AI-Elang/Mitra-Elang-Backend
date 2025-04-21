@@ -62,7 +62,7 @@ class OutletService
             ioh."STATUS" AS status,
             ioh."longitude",
             ioh."latitude",
-            trade."KPI_NAME"
+            trade."KPI_NAME" AS "program"
             ', $qrFilter);
 
         $iohJoinCol = 'ioh.' . $qrFilter;
