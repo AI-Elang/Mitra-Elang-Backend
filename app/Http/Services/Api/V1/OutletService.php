@@ -62,12 +62,8 @@ class OutletService
             ioh."STATUS" AS status,
             ioh."longitude",
             ioh."latitude",
-            CASE
-                WHEN trade."KPI_NAME" IN (\'PestaIM3 Poin\', \'FUNtasTRI Poin\')
-                THEN LEFT(trade."KPI_NAME", LENGTH(trade."KPI_NAME") - 5)
-                ELSE NULL
-            END AS program
-        ', $qrFilter);
+            trade."KPI_NAME"
+            ', $qrFilter);
 
         $iohJoinCol = 'ioh.' . $qrFilter;
 
