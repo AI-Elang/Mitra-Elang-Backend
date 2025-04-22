@@ -78,9 +78,9 @@ class OutletService
             ->whereNotNull('ioh.CATEGORY')
             ->where('ioh.KEC_BRANCHH', $kecamatan)
             ->where(function($query) {
-//                $query->where('trade.VIEW', '=', '1')
-                $query->where('trade.KPI_NAME', '=', 'PestaIM3 Poin')
-                    ->orWhere('trade.KPI_NAME', '=', 'FUNtasTRI Poin')
+                $query->where('trade.VIEW', '=', '1')
+//                $query->where('trade.KPI_NAME', '=', 'PestaIM3 Poin')
+//                    ->orWhere('trade.KPI_NAME', '=', 'FUNtasTRI Poin')
                     ->orWhereNull('trade.VIEW');
             })
             ->get();
