@@ -447,6 +447,9 @@ class DashboardService
 
         $maxData = $maxData ?? (object)['site_count' => "0", 'outlet_count' => "0"];
 
+        $maxData->site_count = (string) $maxData->site_count;
+        $maxData->outlet_count = (string) $maxData->outlet_count;
+
         // Gabungkan data dari dua database
         $profileArray = (array) $profile;
         unset($profileArray['nama_mitra']); // buang nama_mitra dari profile
