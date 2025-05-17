@@ -75,13 +75,19 @@ class AuthService
                     ->nama_mitra; // Ambil satu baris data
             }
 
-            $isnotnull =  DB::connection('pgsql2')->table('ELANG_MTD_PARTNER')
+            $query = DB::connection('pgsql2')->table('ELANG_MTD_PARTNER')
                 ->select('PARTNER_NAME', $filtervalue)
-                ->where('PARTNER_NAME', $nama_mitra)
                 ->where('STATUS', 'VALID')
-                ->whereNotNull($filtervalue)
-//                ->toRawSql();
-                ->first();
+                ->whereNotNull($filtervalue);
+
+            if ($user->role == 7) {
+                $query->where('PARTNER_NAME', 'like', '%' . $nama_mitra . '%');
+            } else {
+                $query->where('PARTNER_NAME', $nama_mitra);
+            }
+
+            $isnotnull = $query->first();
+
 
 //            dd($isnotnull);
 
