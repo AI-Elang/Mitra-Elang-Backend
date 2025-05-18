@@ -223,7 +223,7 @@ class DseAiService
             throw new \Exception('Date is required', 400);
         }
 
-        $image_base_url = 'http://103.157.116.221:8000';
+        $image_base_url = 'http://124.195.58.174:8000';
 
         $data = DB::table('showcases')
             ->select(
